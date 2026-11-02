@@ -135,6 +135,61 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
 .safety p{margin:0;font-size:.88rem;color:var(--silver)}
 .safety .small{align-self:flex-start}
 .locked{opacity:.32;filter:grayscale(1);pointer-events:none;user-select:none}
+#main{display:flex;flex-direction:column;gap:14px}
+.hdr-btns{display:flex;gap:8px;flex:none}
+.brand{white-space:nowrap;min-width:0}
+@media (max-width:440px){.brand{font-size:1rem;letter-spacing:.07em}.brand small{font-size:.52rem;letter-spacing:.2em}.hdr-btns .small{padding:7px 10px;letter-spacing:.08em}}
+.safety-extra{border-top:1px solid var(--line);padding-top:10px;color:var(--white)!important;font-weight:600}
+
+.menu{display:grid;gap:12px}
+.tile{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:6px;padding:18px;border-radius:14px;border:1px solid var(--line);background:var(--brushed)}
+.tile:hover{border-color:var(--steel)}
+.tile:focus-visible{outline:2px solid var(--silver);outline-offset:2px}
+.tile-t{font-family:var(--f-display);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:1.35rem;line-height:1.1;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent}
+.tile-d{color:var(--silver);font-size:.93rem;max-width:52ch}
+.tile-m{font-family:var(--f-display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--steel)}
+
+.cmp-h{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:1.05rem;color:var(--white)}
+.seg{display:inline-flex;border:1px solid var(--line);border-radius:10px;overflow:hidden;flex:none}
+.seg button{all:unset;cursor:pointer;padding:9px 13px;font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--silver);background:var(--panel-2)}
+.seg button+button{border-left:1px solid var(--line)}
+.seg button[aria-pressed="true"]{background:var(--chrome);color:#121417}
+.seg button:focus-visible{outline:2px solid var(--silver);outline-offset:-2px}
+.cmp-stage{position:relative;width:100%;max-width:100%;aspect-ratio:9/8;background:#000;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.cmp-stage canvas{display:block;width:100%;height:100%}
+.cmp-empty{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;padding:16px;text-align:center;
+  background:radial-gradient(120% 90% at 50% 0%,#1d2024 0%,#08090a 70%)}
+.cmp-empty p{margin:0;max-width:30ch;text-wrap:balance}
+.cmp-ctrls{display:flex;flex-direction:column;gap:12px}
+.transport{display:grid;grid-template-columns:1fr 1fr 1.3fr 1fr;gap:8px}
+.transport .small{min-height:48px}
+.side-ctrl{gap:12px}
+.side-row{display:flex;flex-direction:column;gap:6px}
+.side-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px}
+.side-pos{font-family:var(--f-digits);font-variant-numeric:tabular-nums;color:var(--white);font-size:1.15rem}
+.side-bar{display:grid;grid-template-columns:48px 1fr 48px;gap:8px;align-items:center}
+.side-bar .small{min-height:44px;padding:0}
+#cmpSync[aria-pressed="true"]{background:var(--chrome);color:#121417;border-color:#9aa0a8}
+#cmpSync[aria-pressed="false"]{border-color:var(--silver);color:var(--white)}
+.legend{display:grid;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.legend div{background:var(--brushed);padding:10px 14px;display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.legend .digits{font-size:1.6rem}
+.legend .delta{font-family:var(--f-digits);color:var(--white);margin-left:auto}
+.runs{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.runs li{display:flex;align-items:center;gap:8px;padding:6px 8px 6px 6px;border-top:1px solid var(--line)}
+.runs li:first-child{border-top:0}
+.runs .pick{all:unset;box-sizing:border-box;cursor:pointer;flex:1;min-width:0;display:grid;grid-template-columns:auto 1fr;column-gap:10px;row-gap:2px;padding:8px;border-radius:10px;border:1px solid transparent}
+.runs .pick:focus-visible{outline:2px solid var(--silver)}
+.runs .pick[aria-pressed="true"]{border-color:var(--silver);background:var(--panel-2)}
+.runs .box{grid-row:span 2;width:22px;height:22px;border-radius:6px;border:1.5px solid var(--steel);align-self:center;display:flex;align-items:center;justify-content:center;font-weight:700;color:#121417}
+.runs .pick[aria-pressed="true"] .box{background:var(--chrome);border-color:#9aa0a8}
+.runs .when{color:var(--white);font-weight:600}
+.runs .nums{font-family:var(--f-digits);font-variant-numeric:tabular-nums;color:var(--silver);font-size:.9rem}
+.runs .tag{font-family:var(--f-display);font-weight:700;letter-spacing:.14em;font-size:.7rem;color:var(--steel);margin-left:6px}
+.runs .del{min-width:44px;min-height:44px;padding:0 10px}
+.runs .del.arm{border-color:var(--hot);color:#ffd9da}
+.runs .none{display:block;padding:14px;color:var(--steel)}
 .unlock-hint{font-family:var(--f-display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--steel)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--steel);
   color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
@@ -147,7 +202,10 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
 <div class="app">
   <header>
     <div class="brand">Shot Timer Cam<small>Video · Splits · Overlay</small></div>
-    <button id="btnSettings" class="small locked" inert aria-expanded="false" aria-controls="settings">Settings</button>
+    <div class="hdr-btns">
+      <button id="btnMenu" class="small locked" inert hidden>Menu</button>
+      <button id="btnSettings" class="small locked" inert aria-expanded="false" aria-controls="settings">Settings</button>
+    </div>
   </header>
 
   <section class="safety" id="safety" role="note" aria-labelledby="safetyTitle">
@@ -159,9 +217,11 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
       <li>Know your target and what's beyond it.</li>
     </ul>
     <p>Set the phone up before you start, and don't handle it with a firearm in your hand. Turn on auto-stop in Settings so the recording ends on its own. No time is worth a safety mistake.</p>
+    <p class="safety-extra" id="safetyExtra" hidden></p>
     <div class="tools"><button id="btnSafetyOk" class="go">Got it</button><span class="unlock-hint">Tap to unlock the app</span></div>
   </section>
 
+  <main id="main" class="locked" inert>
   <section id="settings" class="panel" hidden>
     <h2>Settings</h2>
     <div class="field">
@@ -185,7 +245,23 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
     <div class="tools"><button id="btnTestBeep" class="small">Test beep</button><p class="hint">Turn media volume up. The beep is recorded in the video so the app can find it.</p></div>
   </section>
 
-  <section id="live" class="locked" inert style="display:flex;flex-direction:column;gap:14px">
+  <section id="menu" class="menu" aria-label="Main menu">
+    <button class="tile" id="goLive">
+      <span class="tile-t">Live timer</span>
+      <span class="tile-d">Record a string. The app waits a random delay, beeps, and times every shot. Each string is saved on this phone for Compare draws.</span>
+    </button>
+    <button class="tile" id="goLoad">
+      <span class="tile-t">Load a video</span>
+      <span class="tile-d">Add the time and splits to a clip you already have, like old range videos with friends.</span>
+    </button>
+    <button class="tile" id="goCompare">
+      <span class="tile-t">Compare draws</span>
+      <span class="tile-d">Play two of your live strings together from the beep, side by side or as a ghost, to see where the faster draw pulls ahead.</span>
+      <span class="tile-m" id="runCount">No saved strings yet</span>
+    </button>
+  </section>
+
+  <section id="live" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="viewport" id="viewport">
       <video id="cam" playsinline muted></video>
       <div class="placeholder" id="camPh">
@@ -208,7 +284,7 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
     <p class="hint">Start turns on recording, waits a random delay, then beeps. Shoot on the beep. Times on screen are a live preview; the saved video uses the exact times from the recording.</p>
   </section>
 
-  <section id="review" hidden style="flex-direction:column;gap:14px">
+  <section id="review" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="player" id="player"><video id="pv" playsinline controls preload="auto"></video><canvas id="pov"></canvas></div>
     <p class="msg" id="revMsg" hidden></p>
 
@@ -259,7 +335,72 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
     <p class="hint">Saving plays the clip through once at normal speed while it burns in the times, so keep this screen open until it finishes.</p>
   </section>
 
+  <section id="compare" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="tools">
+      <h2 class="cmp-h grow">Compare draws</h2>
+      <div class="seg" role="group" aria-label="View">
+        <button data-mode="side" aria-pressed="true">Side by side</button>
+        <button data-mode="ghost" aria-pressed="false">Ghost</button>
+      </div>
+    </div>
+
+    <div class="cmp-stage" id="cmpStage">
+      <canvas id="cmpCv" width="1080" height="960"></canvas>
+      <div class="cmp-empty" id="cmpEmpty"><p id="cmpEmptyTxt">Record at least two strings with Live timer, then pick two here.</p></div>
+    </div>
+
+    <div id="cmpCtrls" class="cmp-ctrls" hidden>
+      <input type="range" id="cmpScrub" min="-0.5" max="3" step="0.001" value="-0.5" aria-label="Time from the beep">
+      <div class="transport">
+        <button id="cmpRestart" class="small" aria-label="Back to the beep">⟲ Beep</button>
+        <button id="cmpBack" class="small" aria-label="Back one frame">◀ Frame</button>
+        <button id="cmpPlay" class="go">Play</button>
+        <button id="cmpFwd" class="small" aria-label="Forward one frame">Frame ▶</button>
+      </div>
+      <div class="tools">
+        <span class="lbl">Speed</span>
+        <div class="seg" role="group" aria-label="Playback speed">
+          <button data-rate="1" aria-pressed="true">1×</button>
+          <button data-rate="0.5" aria-pressed="false">½×</button>
+          <button data-rate="0.25" aria-pressed="false">¼×</button>
+        </div>
+        <button id="cmpToShot" class="small">Jump to faster shot</button>
+      </div>
+      <div class="panel side-ctrl">
+        <div class="tools"><h2 class="grow">Move each side</h2><button id="cmpSync" class="small" aria-pressed="true">Synced</button></div>
+        <p class="hint" id="syncHint">Both sides are at the same time from the beep. Drag a side's slider or tap its arrows to run it on its own.</p>
+        <div class="side-row">
+          <div class="side-top"><span class="lbl">Faster</span><span class="side-pos" id="posA">0.00</span></div>
+          <div class="side-bar">
+            <button class="small" data-step="a" data-dir="-1" aria-label="Faster side back one frame">◀</button>
+            <input type="range" id="sliderA" min="-0.5" max="3" step="0.001" value="-0.5" aria-label="Faster side time from its beep">
+            <button class="small" data-step="a" data-dir="1" aria-label="Faster side forward one frame">▶</button>
+          </div>
+        </div>
+        <div class="side-row">
+          <div class="side-top"><span class="lbl">Slower</span><span class="side-pos" id="posB">0.00</span></div>
+          <div class="side-bar">
+            <button class="small" data-step="b" data-dir="-1" aria-label="Slower side back one frame">◀</button>
+            <input type="range" id="sliderB" min="-0.5" max="3" step="0.001" value="-0.5" aria-label="Slower side time from its beep">
+            <button class="small" data-step="b" data-dir="1" aria-label="Slower side forward one frame">▶</button>
+          </div>
+        </div>
+      </div>
+      <div class="field" id="ghostField" hidden>
+        <label class="lbl" for="ghostAlpha">Ghost strength</label>
+        <input type="range" id="ghostAlpha" min="15" max="85" step="5" value="50">
+        <p class="hint">Ghost works best when both strings were filmed from the same spot with the phone on a tripod.</p>
+      </div>
+      <div class="legend" id="cmpLegend"></div>
+    </div>
+
+    <div class="tools"><span class="lbl grow">Your live strings · pick two</span><span class="hint" id="runHint"></span></div>
+    <ol class="runs" id="runList"></ol>
+    <p class="hint">Only strings recorded with Live timer are saved here, and only on this phone. The newest 30 are kept.</p>
+  </section>
+
   <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Splits are to 1/100 s.</p>
+  </main>
 </div>
 
 <script>
@@ -276,12 +417,86 @@ const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoSto
 const saveSettings = () => store.set("settings", settings);
 const thrLin = () => Math.pow(10, settings.thrDb / 20);
 
-/* ---------- safety banner: shown every time the app opens ---------- */
-/* Everything stays locked (inert) until the shooter taps Got it. */
+/* ---------- safety banner ---------- */
+/* Shown when the app opens and again before Compare draws.
+   Everything stays locked (inert) until the shooter taps Got it. */
+let afterSafety = null;
+function lockApp(on){
+  ["#main", "#btnSettings", "#btnMenu"].forEach(s => {
+    const el = $(s); el.inert = on; if (!on) el.removeAttribute("inert"); el.classList.toggle("locked", on);
+  });
+}
+function requireSafety(extra, next){
+  const x = $("#safetyExtra"); x.textContent = extra || ""; x.hidden = !extra;
+  afterSafety = next || null;
+  $("#safety").hidden = false;
+  lockApp(true);
+  window.scrollTo({ top: 0 });
+  try { $("#btnSafetyOk").focus({ preventScroll: true }); } catch(e){}
+}
 $("#btnSafetyOk").onclick = () => {
   $("#safety").hidden = true;
-  document.querySelectorAll(".locked").forEach(el => { el.inert = false; el.removeAttribute("inert"); el.classList.remove("locked"); });
+  lockApp(false);
+  const f = afterSafety; afterSafety = null;
+  if (f) f();
 };
+
+/* ---------- saved live strings (IndexedDB, this phone only) ---------- */
+const DB = (() => {
+  let p = null;
+  function open(){
+    if (!p) p = new Promise((res, rej) => {
+      let r; try { r = indexedDB.open("shottimer", 1); } catch(e){ rej(e); return; }
+      r.onupgradeneeded = () => { if (!r.result.objectStoreNames.contains("runs")) r.result.createObjectStore("runs", { keyPath: "id" }); };
+      r.onsuccess = () => res(r.result);
+      r.onerror = () => rej(r.error);
+    }).catch(e => { p = null; throw e; });
+    return p;
+  }
+  async function tx(mode, fn){
+    const db = await open();
+    return new Promise((res, rej) => {
+      const t = db.transaction("runs", mode), req = fn(t.objectStore("runs"));
+      let out; if (req) req.onsuccess = () => { out = req.result; };
+      t.oncomplete = () => res(out); t.onerror = () => rej(t.error); t.onabort = () => rej(t.error);
+    });
+  }
+  return {
+    put: rec => tx("readwrite", st => st.put(rec)),
+    all: () => tx("readonly", st => st.getAll()),
+    count: () => tx("readonly", st => st.count()),
+    del: id => tx("readwrite", st => st.delete(id))
+  };
+})();
+const MAX_RUNS = 30;
+
+/* ---------- screens ---------- */
+let view = "menu";
+function showView(name){
+  if (name !== "compare" && typeof cmpPause === "function") cmpPause();
+  if (name !== "review" && typeof pv !== "undefined" && pv) pv.pause();
+  ["menu", "live", "review", "compare"].forEach(v => { $("#" + v).hidden = v !== name; });
+  $("#btnMenu").hidden = name === "menu";
+  view = name;
+  if (name === "menu") refreshRunCount();
+  window.scrollTo({ top: 0 });
+}
+async function refreshRunCount(){
+  let n = 0; try { n = await DB.count(); } catch(e){}
+  $("#runCount").textContent = n === 0 ? "No saved strings yet" : n === 1 ? "1 saved string · record one more" : n + " saved strings";
+}
+$("#btnMenu").onclick = () => {
+  if (state.mode === "live"){ toast("Stop the recording first."); return; }
+  if (state.mode === "processing") return;
+  if (exporting){ toast("Wait for the video to finish saving."); return; }
+  showView("menu");
+};
+$("#goLive").onclick = () => showView("live");
+$("#goLoad").onclick = () => $("#fileIn").click();
+$("#goCompare").onclick = () => requireSafety(
+  "Before you compare: unload, show clear, and holster or bench the firearm. Only pick up the phone with empty hands.",
+  () => openCompare()
+);
 
 /* ---------- downloads (Claude viewer) ---------- */
 let dlCap = null;
@@ -545,7 +760,7 @@ function onRecStop(){
   const type = (rec && rec.mimeType) || "video/webm";
   const blob = new Blob(chunks, { type });
   chunks = [];
-  loadRun(blob, type.includes("mp4") ? "mp4" : "webm");
+  loadRun(blob, type.includes("mp4") ? "mp4" : "webm", true);
 }
 $("#btnStart").onclick = () => { if (state.mode === "idle") startRun(); else if (state.mode === "live") stopRun(); };
 
@@ -554,9 +769,10 @@ $("#fileIn").onchange = e => {
   const f = e.target.files && e.target.files[0]; e.target.value = "";
   if (!f) return;
   const ext = /webm/i.test(f.type || f.name) ? "webm" : "mp4";
+  showView("live");
   state.mode = "processing";
   $("#btnStart").disabled = true;
-  loadRun(f, ext);
+  loadRun(f, ext, false);
 };
 
 /* ---------- review ---------- */
@@ -574,7 +790,7 @@ async function fixDuration(v){
 }
 function waitMeta(v){ return v.readyState >= 1 ? Promise.resolve() : new Promise((res, rej) => { v.onloadedmetadata = () => res(); v.onerror = () => rej(new Error("video")); }); }
 
-async function loadRun(blob, ext){
+async function loadRun(blob, ext, isLive){
   showMsg($("#liveMsg"), "Finding the start beep and your shots…");
   try {
     const buf = await blob.arrayBuffer();
@@ -582,7 +798,7 @@ async function loadRun(blob, ext){
     const sr = audio.sampleRate, len = audio.length, pcm = new Float32Array(len);
     for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
     if (run && run.url) URL.revokeObjectURL(run.url);
-    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [] };
+    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now() };
     const noBeep = !run.beep;
     /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
     if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
@@ -594,7 +810,8 @@ async function loadRun(blob, ext){
     pov.width = Math.round(w * scale); pov.height = Math.round(h * scale);
     redetect();
     showMsg($("#liveMsg"), "");
-    $("#live").style.display = "none"; $("#review").hidden = false; $("#review").style.display = "flex";
+    showView("review");
+    if (run.live) persistRun(true);
     if (noBeep) showMsg($("#revMsg"), "No start beep in this clip, so the clock starts at the beginning of the video. To start it somewhere else, pause the video there and tap Set beep at playhead.");
     else showMsg($("#revMsg"), "");
     pv.currentTime = run.beep ? Math.max(0, run.beep.t - 1) : 0;
@@ -645,6 +862,26 @@ function render(){
     li.append(n, tm, spl, del); list.appendChild(li);
   });
   drawPreview();
+  if (run.live) schedulePersist();
+}
+let persistT = 0;
+function schedulePersist(){ clearTimeout(persistT); persistT = setTimeout(() => persistRun(false), 500); }
+async function persistRun(first){
+  if (!run || !run.live || !run.beep) return;
+  const r = run;
+  try {
+    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice() });
+    if (first){
+      toast("String saved for Compare draws");
+      const all = await DB.all();
+      if (all.length > MAX_RUNS){
+        all.sort((a, b) => b.id - a.id);
+        for (const old of all.slice(MAX_RUNS)) await DB.del(old.id);
+      }
+    }
+  } catch(e){
+    if (first) toast("Couldn't save this string on the phone. Storage may be full.");
+  }
 }
 $("#btnAdd").onclick = () => {
   if (!run) return;
@@ -661,7 +898,7 @@ $("#beepMinus").onclick = () => { if (run && run.beep){ run.beep.t = Math.max(0,
 $("#beepPlus").onclick = () => { if (run && run.beep){ run.beep.t += 0.01; render(); } };
 $("#btnNew").onclick = () => {
   if (editLayout) setEditLayout(false);
-  pv.pause(); $("#review").hidden = true; $("#review").style.display = "none"; $("#live").style.display = "flex";
+  pv.pause(); showView("live");
   setFace("Ready", "0.00", "Split", "–", "Shots 0"); resetLive(); showMsg($("#revMsg"), "");
 };
 
@@ -814,6 +1051,337 @@ pv.addEventListener("play", () => { cancelAnimationFrame(pvLoop); previewLoop();
 pv.addEventListener("seeked", drawPreview);
 pv.addEventListener("timeupdate", () => { if (pv.paused) drawPreview(); });
 
+/* ---------- compare draws ---------- */
+/* Two saved live strings play together on one canvas, both lined up on their start beep.
+   The faster draw is always "A": left/top in side by side, the see-through layer in ghost. */
+const cmp = { mode: store.get("cmpMode", "side"), alpha: 0.5, rate: 1, sel: [], runs: [], s: -0.5, end: 3,
+              playing: false, last: 0, raf: 0, a: null, b: null, split: "h", seekTok: 0,
+              off: { a: 0, b: 0 }, lastK: "a" };
+const PRE = 0.5, FRAME = 1 / 30;
+const hold = document.createElement("div");
+hold.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none";
+document.body.appendChild(hold);
+function mkVid(){ const v = document.createElement("video"); v.muted = true; v.playsInline = true; v.setAttribute("playsinline", ""); v.preload = "auto"; hold.appendChild(v); return v; }
+const cvA = mkVid(), cvB = mkVid();
+const cmpCv = $("#cmpCv"), cg = cmpCv.getContext("2d");
+const drawOf = r => r.shots.length ? r.shots[0] - r.beep : Infinity;
+const endOf = r => r.shots.length ? r.shots[r.shots.length - 1] - r.beep : 3;
+const whenTxt = id => { try { return new Date(id).toLocaleString(undefined, { month: "short", day: "numeric", hour: "numeric", minute: "2-digit" }); } catch(e){ return new Date(id).toLocaleString(); } };
+
+async function openCompare(){
+  showView("compare");
+  setModeUI();
+  await loadRunList();
+}
+async function loadRunList(){
+  try { cmp.runs = (await DB.all()).filter(r => r.blob && r.shots && r.shots.length).sort((x, y) => y.id - x.id); }
+  catch(e){ cmp.runs = []; }
+  cmp.sel = cmp.sel.filter(id => cmp.runs.some(r => r.id === id));
+  if (cmp.sel.length < 2 && cmp.runs.length >= 2){
+    const fastest = cmp.runs.reduce((m, r) => drawOf(r) < drawOf(m) ? r : m);
+    const other = cmp.runs.find(r => r.id !== fastest.id);
+    cmp.sel = [fastest.id, other.id];
+  }
+  renderRunList();
+  await loadPair();
+}
+function renderRunList(){
+  const list = $("#runList"); list.textContent = "";
+  $("#runHint").textContent = cmp.runs.length ? cmp.sel.length + " of 2 picked" : "";
+  if (!cmp.runs.length){
+    const li = document.createElement("li"); const s = document.createElement("span"); s.className = "none";
+    s.textContent = "No live strings saved yet. Use Live timer to record one.";
+    li.appendChild(s); list.appendChild(li); return;
+  }
+  const picked = cmp.sel.map(id => cmp.runs.find(r => r.id === id)).filter(Boolean).sort((x, y) => drawOf(x) - drawOf(y));
+  cmp.runs.forEach(r => {
+    const li = document.createElement("li");
+    const b = document.createElement("button"); b.className = "pick";
+    const on = cmp.sel.includes(r.id); b.setAttribute("aria-pressed", String(on));
+    const box = document.createElement("span"); box.className = "box"; box.textContent = on ? "✓" : "";
+    const when = document.createElement("span"); when.className = "when"; when.textContent = whenTxt(r.id);
+    if (on && picked.length === 2){ const t = document.createElement("span"); t.className = "tag"; t.textContent = picked[0].id === r.id ? "FASTER" : "SLOWER"; when.appendChild(t); }
+    const nums = document.createElement("span"); nums.className = "nums";
+    nums.textContent = "Draw " + fmt(drawOf(r)) + " · " + r.shots.length + (r.shots.length === 1 ? " shot" : " shots") + " · " + fmt(endOf(r));
+    b.append(box, when, nums);
+    b.onclick = () => {
+      if (on) cmp.sel = cmp.sel.filter(id => id !== r.id);
+      else { cmp.sel.push(r.id); if (cmp.sel.length > 2) cmp.sel.shift(); }
+      renderRunList(); loadPair();
+    };
+    const del = document.createElement("button"); del.className = "small del"; del.textContent = "×";
+    del.setAttribute("aria-label", "Delete string from " + whenTxt(r.id));
+    del.onclick = async () => {
+      if (!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent = "Delete?"; setTimeout(() => { if (del.isConnected){ del.classList.remove("arm"); del.textContent = "×"; } }, 3000); return; }
+      try { await DB.del(r.id); } catch(e){}
+      cmp.sel = cmp.sel.filter(id => id !== r.id);
+      toast("String deleted");
+      await loadRunList();
+    };
+    li.append(b, del); list.appendChild(li);
+  });
+}
+function setSrc(v, r){
+  if (v._id === r.id) return false;
+  if (v._url) URL.revokeObjectURL(v._url);
+  v._url = URL.createObjectURL(r.blob); v._id = r.id; v.src = v._url;
+  return true;
+}
+async function loadPair(){
+  cmpPause();
+  const pick = cmp.sel.map(id => cmp.runs.find(r => r.id === id)).filter(Boolean).sort((x, y) => drawOf(x) - drawOf(y));
+  if (pick.length < 2){
+    cmp.a = cmp.b = null;
+    $("#cmpEmptyTxt").textContent = cmp.runs.length < 2
+      ? "Record at least two strings with Live timer, then pick two here."
+      : "Pick two strings below to compare.";
+    $("#cmpEmpty").hidden = false; $("#cmpCtrls").hidden = true;
+    return;
+  }
+  cmp.a = pick[0]; cmp.b = pick[1];
+  $("#cmpEmptyTxt").textContent = "Loading…"; $("#cmpEmpty").hidden = false;
+  try {
+    setSrc(cvA, cmp.a); setSrc(cvB, cmp.b);
+    await Promise.all([waitMeta(cvA), waitMeta(cvB)]);
+    await fixDuration(cvA); await fixDuration(cvB);
+  } catch(e){
+    $("#cmpEmptyTxt").textContent = "Couldn't open one of these strings. Try picking a different one.";
+    return;
+  }
+  cmp.end = Math.max(endOf(cmp.a), endOf(cmp.b)) + 0.5;
+  for (const id of ["#cmpScrub", "#sliderA", "#sliderB"]){ const sc = $(id); sc.min = -PRE; sc.max = cmp.end.toFixed(3); }
+  cmp.s = -PRE; cmp.off = { a: 0, b: 0 }; cmp.lastK = "a";
+  updateSyncUI();
+  sizeCanvas();
+  $("#cmpEmpty").hidden = true; $("#cmpCtrls").hidden = false;
+  renderLegend();
+  await seekBoth();
+}
+function sizeCanvas(){
+  const ref = cvB.videoWidth ? cvB : cvA;
+  const vw = ref.videoWidth || 1280, vh = ref.videoHeight || 720, portrait = vh > vw;
+  if (cmp.mode === "ghost"){
+    const sc = Math.min(1, 1280 / Math.max(vw, vh));
+    cmpCv.width = Math.round(vw * sc); cmpCv.height = Math.round(vh * sc);
+  } else if (portrait){
+    const ph = 960, pw = Math.round(ph * vw / vh);
+    cmpCv.width = pw * 2; cmpCv.height = ph; cmp.split = "h";
+  } else {
+    const pw = 960, ph = Math.round(pw * vh / vw);
+    cmpCv.width = pw; cmpCv.height = ph * 2; cmp.split = "v";
+  }
+  $("#cmpStage").style.aspectRatio = cmpCv.width + " / " + cmpCv.height;
+}
+function vidTarget(v, r, k){
+  const d = isFinite(v.duration) ? v.duration - 0.03 : 1e9;
+  return Math.min(Math.max(0, r.beep + cmp.s + cmp.off[k]), d);
+}
+function seekTo(v, t){
+  return new Promise(res => {
+    if (Math.abs(v.currentTime - t) < 0.0005){ res(); return; }
+    let done = false;
+    const fin = () => { if (done) return; done = true; v.removeEventListener("seeked", fin); res(); };
+    v.addEventListener("seeked", fin); v.currentTime = t; setTimeout(fin, 1500);
+  });
+}
+async function seekBoth(){
+  if (!cmp.a) return;
+  const tok = ++cmp.seekTok;
+  updateSideUI();
+  await Promise.all([seekTo(cvA, vidTarget(cvA, cmp.a, "a")), seekTo(cvB, vidTarget(cvB, cmp.b, "b"))]);
+  if (tok === cmp.seekTok) drawCompare();
+}
+/* Each side's spot = shared clock + that side's own offset. Moving one side changes its offset;
+   the shared controls move both and keep the gap; Sync puts both at the same time from the beep. */
+const sidePos = k => cmp.s + cmp.off[k];
+const signed = t => (t < 0 ? "−" : "") + Math.abs(t).toFixed(2);
+function updateSideUI(){
+  if (!cmp.a) return;
+  const pa = sidePos("a"), pb = sidePos("b");
+  $("#sliderA").value = pa; $("#sliderB").value = pb;
+  $("#posA").textContent = signed(pa) + " s from beep"; $("#posB").textContent = signed(pb) + " s from beep";
+  const sc = $("#cmpScrub");
+  sc.min = (-PRE - Math.max(0, cmp.off.a, cmp.off.b)).toFixed(3);
+  sc.max = (cmp.end - Math.min(0, cmp.off.a, cmp.off.b)).toFixed(3);
+  sc.value = cmp.s;
+}
+const isSynced = () => Math.abs(cmp.off.a - cmp.off.b) < 0.0005;
+function updateSyncUI(){
+  const b = $("#cmpSync"), on = isSynced();
+  b.setAttribute("aria-pressed", String(on)); b.textContent = on ? "Synced" : "Sync";
+  $("#syncHint").textContent = on
+    ? "Both sides are at the same time from the beep. Drag a side's slider or tap its arrows to run it on its own."
+    : "The sides are " + Math.abs(cmp.off.a - cmp.off.b).toFixed(2) + " s apart. Play and the main slider keep that gap. Tap Sync to put both back at the same time.";
+}
+function relink(){ /* shared controls keep each side's offset */ }
+function cmpPlay(){
+  if (!cmp.a) return;
+  relink(false);
+  if (Math.min(sidePos("a"), sidePos("b")) >= cmp.end - 0.01) cmp.s = -PRE - Math.min(cmp.off.a, cmp.off.b);
+  cmp.playing = true;
+  for (const v of [cvA, cvB]) v.playbackRate = cmp.rate;
+  syncVids(true);
+  cmp.last = performance.now();
+  $("#cmpPlay").textContent = "Pause";
+  cancelAnimationFrame(cmp.raf); cmp.raf = requestAnimationFrame(cmpLoop);
+}
+function cmpPause(){
+  if (!cmp.playing) return;
+  cmp.playing = false;
+  cancelAnimationFrame(cmp.raf);
+  cvA.pause(); cvB.pause();
+  $("#cmpPlay").textContent = "Play";
+  seekBoth();
+}
+function cmpLoop(now){
+  if (!cmp.playing) return;
+  cmp.s += Math.min(0.1, (now - cmp.last) / 1000) * cmp.rate; cmp.last = now;
+  if (Math.min(sidePos("a"), sidePos("b")) >= cmp.end){ cmpPause(); return; }
+  syncVids(false);
+  drawCompare();
+  updateSideUI();
+  cmp.raf = requestAnimationFrame(cmpLoop);
+}
+function syncVids(force){
+  for (const [v, r, k] of [[cvA, cmp.a, "a"], [cvB, cmp.b, "b"]]){
+    const t = r.beep + cmp.s + cmp.off[k], dur = isFinite(v.duration) ? v.duration : 1e9;
+    if (t < 0 || t >= dur - 0.03){ if (!v.paused) v.pause(); continue; }
+    if (force || Math.abs(v.currentTime - t) > 0.08) v.currentTime = t;
+    if (v.paused) v.play().catch(() => {});
+  }
+}
+function drawContain(v, x, y, w, h){
+  const vw = v.videoWidth, vh = v.videoHeight;
+  if (!vw || !vh) return;
+  const sc = Math.min(w / vw, h / vh), dw = vw * sc, dh = vh * sc;
+  cg.drawImage(v, x + (w - dw) / 2, y + (h - dh) / 2, dw, dh);
+}
+function chip(g, x, y, u, text, strong){
+  g.font = LABEL_FONT(u * 3.8); track(g, (u * 0.4).toFixed(1) + "px");
+  const w = g.measureText(text).width + u * 4, h = u * 6.4;
+  rr(g, x, y, w, h, u * 1.2);
+  g.fillStyle = strong ? "rgba(230,232,236,0.92)" : "rgba(8,9,11,0.74)"; g.fill();
+  g.fillStyle = strong ? "#121417" : "#c4c9cf"; g.textAlign = "left"; g.textBaseline = "middle";
+  g.fillText(text, x + u * 2, y + h / 2 + u * 0.2);
+  g.textBaseline = "alphabetic"; track(g, "0px");
+}
+function clockPlate(g, x, y, u, label, value, flash, extra){
+  g.font = DIGIT_FONT(u * 9);
+  const vw = g.measureText(value).width;
+  g.font = DIGIT_FONT(u * 4.6);
+  const ew = extra ? g.measureText(extra).width + u * 3 : 0;
+  const w = Math.max(u * 24, vw + ew + u * 6), h = u * 15.5;
+  rr(g, x, y, w, h, u * 1.6);
+  g.fillStyle = "rgba(8,9,11,0.76)"; g.fill();
+  g.lineWidth = Math.max(1, u * 0.35);
+  g.strokeStyle = flash ? "rgba(255,255,255,0.95)" : "rgba(196,201,207,0.38)"; g.stroke();
+  g.textAlign = "left";
+  g.font = LABEL_FONT(u * 2.7); track(g, (u * 0.35).toFixed(1) + "px");
+  g.fillStyle = "#8b919a"; g.fillText(label, x + u * 3, y + u * 4.4);
+  track(g, "0px");
+  const grad = g.createLinearGradient(0, y + u * 5, 0, y + h - u * 2);
+  grad.addColorStop(0, "#f5f6f8"); grad.addColorStop(0.48, "#c4c9cf"); grad.addColorStop(0.52, "#8e949c"); grad.addColorStop(1, "#e3e6ea");
+  g.font = DIGIT_FONT(u * 9); g.fillStyle = grad; g.fillText(value, x + u * 3, y + h - u * 3);
+  if (extra){ g.font = DIGIT_FONT(u * 4.6); g.fillStyle = "#e8eaed"; g.fillText(extra, x + u * 4.5 + vw, y + h - u * 3); }
+  return { w, h };
+}
+/* One run's state at its own video time, so every clock matches the frame it sits on. */
+function runState(v, r){
+  const s = v.currentTime - r.beep, d = drawOf(r);
+  if (s < 0) return { label: "STANDBY", value: "0.00", fired: false, flash: false, s };
+  if (s >= d - 0.02) return { label: "DRAW", value: fmt(d), fired: true, flash: s - d < 0.15, s };
+  return { label: "TIME", value: fmt(s), fired: false, flash: false, s };
+}
+function drawCompare(){
+  const g = cg, W = cmpCv.width, H = cmpCv.height;
+  g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
+  if (!cmp.a) return;
+  const A = runState(cvA, cmp.a), B = runState(cvB, cmp.b), dA = drawOf(cmp.a), dB = drawOf(cmp.b);
+  const behind = B.fired ? "+" + fmt(dB - dA) : (A.fired ? "+" + fmt(Math.max(0, B.s - dA)) : "");
+  g.save();
+  if (cmp.mode === "ghost"){
+    drawContain(cvB, 0, 0, W, H);
+    g.globalAlpha = cmp.alpha; drawContain(cvA, 0, 0, W, H); g.globalAlpha = 1;
+    const u = Math.min(W, H) / 100;
+    chip(g, u * 3, u * 3, u, "GHOST · FASTER " + fmt(dA), true);
+    const p1 = clockPlate(g, u * 3, H - u * 34, u, "GHOST " + A.label, A.value, A.flash, "");
+    clockPlate(g, u * 3, H - u * 34 + p1.h + u * 2, u, "SLOWER " + B.label, B.value, B.flash, behind);
+  } else {
+    const panels = cmp.split === "h"
+      ? [[0, 0, W / 2, H], [W / 2, 0, W / 2, H]]
+      : [[0, 0, W, H / 2], [0, H / 2, W, H / 2]];
+    [[cvA, A, "FASTER", "", panels[0]], [cvB, B, "SLOWER", behind, panels[1]]].forEach(([v, st, tag, extra, p]) => {
+      const [x, y, w, h] = p;
+      g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
+      drawContain(v, x, y, w, h);
+      const u = Math.min(w, h) / 100 * (cmp.split === "h" ? 1.7 : 1.1);
+      chip(g, x + u * 2.5, y + u * 2.5, u, tag, tag === "FASTER");
+      clockPlate(g, x + u * 2.5, y + h - u * 18, u, st.label, st.value, st.flash, extra);
+      g.restore();
+    });
+    g.fillStyle = "#2c3036";
+    if (cmp.split === "h") g.fillRect(W / 2 - 1, 0, 2, H); else g.fillRect(0, H / 2 - 1, W, 2);
+  }
+  g.restore();
+}
+function renderLegend(){
+  const L = $("#cmpLegend"); L.textContent = "";
+  if (!cmp.a) return;
+  const dA = drawOf(cmp.a), dB = drawOf(cmp.b);
+  [[cmp.a, "Faster", ""], [cmp.b, "Slower", "+" + fmt(dB - dA) + " on the draw"]].forEach(([r, name, delta]) => {
+    const row = document.createElement("div");
+    const l = document.createElement("span"); l.className = "lbl"; l.textContent = name + " · " + whenTxt(r.id);
+    const d = document.createElement("span"); d.className = "digits"; d.textContent = fmt(drawOf(r));
+    row.append(l, d);
+    if (delta){ const x = document.createElement("span"); x.className = "delta"; x.textContent = delta; row.appendChild(x); }
+    L.appendChild(row);
+  });
+}
+function setModeUI(){
+  document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === cmp.mode)));
+  $("#ghostField").hidden = cmp.mode !== "ghost";
+}
+document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
+  cmp.mode = b.dataset.mode; store.set("cmpMode", cmp.mode); setModeUI();
+  if (cmp.a){ sizeCanvas(); drawCompare(); }
+});
+document.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => {
+  cmp.rate = Number(b.dataset.rate);
+  document.querySelectorAll("[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
+  for (const v of [cvA, cvB]) v.playbackRate = cmp.rate;
+});
+$("#ghostAlpha").oninput = e => { cmp.alpha = Number(e.target.value) / 100; drawCompare(); };
+$("#cmpPlay").onclick = () => cmp.playing ? cmpPause() : cmpPlay();
+$("#cmpRestart").onclick = () => { cmpPause(); relink(true); cmp.s = -PRE - Math.min(cmp.off.a, cmp.off.b); seekBoth(); };
+$("#cmpBack").onclick = () => { cmpPause(); relink(true); cmp.s -= FRAME; seekBoth(); };
+$("#cmpFwd").onclick = () => { cmpPause(); relink(true); cmp.s += FRAME; seekBoth(); };
+$("#cmpToShot").onclick = () => { if (!cmp.a) return; cmpPause(); relink(true); cmp.s = drawOf(cmp.a) - cmp.off.a + 0.005; seekBoth(); };
+$("#cmpScrub").oninput = e => { cmpPause(); relink(true); cmp.s = Number(e.target.value); seekBoth(); };
+/* Per-side controls move only that side, and unlock the pair until Sync is tapped. */
+function moveSide(k, pos){
+  if (!cmp.a) return;
+  cmpPause();
+  cmp.off[k] = Math.min(cmp.end, Math.max(-PRE, pos)) - cmp.s;
+  cmp.lastK = k;
+  updateSyncUI();
+  seekBoth();
+}
+$("#sliderA").oninput = e => moveSide("a", Number(e.target.value));
+$("#sliderB").oninput = e => moveSide("b", Number(e.target.value));
+document.querySelectorAll("[data-step]").forEach(b => b.onclick = () => {
+  const k = b.dataset.step; moveSide(k, sidePos(k) + FRAME * Number(b.dataset.dir));
+});
+/* Sync: both sides jump to the same time from the beep, matching the side you moved last. */
+$("#cmpSync").onclick = () => {
+  if (!cmp.a) return;
+  if (isSynced()){ toast("Both sides are already at the same time."); return; }
+  cmpPause();
+  cmp.s = sidePos(cmp.lastK); cmp.off = { a: 0, b: 0 };
+  updateSyncUI(); seekBoth();
+  toast("Synced at " + signed(cmp.s) + " s from the beep");
+};
+for (const v of [cvA, cvB]) v.addEventListener("seeked", () => { if (!cmp.playing && view === "compare") drawCompare(); });
+
 /* ---------- export ---------- */
 let exporting = false;
 async function exportVideo(){
@@ -893,6 +1461,9 @@ async function saveBlob(blob, name){
   toast("Saved to Downloads as " + name);
 }
 $("#btnSave").onclick = exportVideo;
+refreshRunCount();
+/* Test hook, only when the address ends in #test */
+if (location.hash === "#test") window.__stc = { loadRun: (b, ext) => loadRun(b, ext, true), DB };
 })();
 </script>
 
