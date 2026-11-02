@@ -190,6 +190,14 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
 .runs .del{min-width:44px;min-height:44px;padding:0 10px}
 .runs .del.arm{border-color:var(--hot);color:#ffd9da}
 .runs .none{display:block;padding:14px;color:var(--steel)}
+.setup .setup-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.stepper{display:grid;grid-template-columns:42px minmax(0,1fr) 42px;align-items:center;gap:4px}
+.stepper .small{min-height:44px;padding:0;font-size:1.2rem}
+.step-val{text-align:center;white-space:nowrap;font-family:var(--f-digits);font-variant-numeric:tabular-nums;font-size:1.1rem;color:var(--white)}
+button,label.file{-webkit-tap-highlight-color:transparent}
+.shots .seek.late{color:#ffb4b6}
+.sub{margin:6px 0 0;padding-top:12px;border-top:1px solid var(--line);font-family:var(--f-display);font-weight:600;letter-spacing:.18em;text-transform:uppercase;font-size:.8rem;color:var(--silver)}
+#settings > h2 + .sub{border-top:0;padding-top:0;margin-top:0}
 .unlock-hint{font-family:var(--f-display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--steel)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--steel);
   color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
@@ -224,6 +232,7 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
   <main id="main" class="locked" inert>
   <section id="settings" class="panel" hidden>
     <h2>Settings</h2>
+    <h3 class="sub">Timer</h3>
     <div class="field">
       <span class="lbl">Random start delay</span>
       <div class="field-row">
@@ -243,6 +252,37 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
       <div class="field-row hint">after <input type="number" id="autoStopSec" min="2" max="30" step="1" aria-label="Seconds of quiet before stopping"> seconds with no shots</div>
     </div>
     <div class="tools"><button id="btnTestBeep" class="small">Test beep</button><p class="hint">Turn media volume up. The beep is recorded in the video so the app can find it.</p></div>
+
+    <h3 class="sub">Overlay</h3>
+    <div class="field">
+      <span class="lbl">Where the timer and splits sit</span>
+      <div class="tools" role="group" aria-label="Overlay positions">
+        <button class="small" data-preset="bottom">Bottom</button>
+        <button class="small" data-preset="top">Top</button>
+        <button class="small" data-preset="left">Stack left</button>
+        <button class="small" data-preset="right">Stack right</button>
+      </div>
+      <p class="hint">To drag them anywhere, open a video and tap Move overlays.</p>
+    </div>
+    <div class="field">
+      <label class="lbl" for="ovScale">Overlay size</label>
+      <input type="range" id="ovScale" min="60" max="160" step="5">
+    </div>
+
+    <h3 class="sub">Compare draws</h3>
+    <div class="field">
+      <span class="lbl">View</span>
+      <div class="seg" role="group" aria-label="Compare view">
+        <button data-mode="side" aria-pressed="true">Side by side</button>
+        <button data-mode="ghost" aria-pressed="false">Ghost</button>
+      </div>
+    </div>
+    <div class="field" id="ghostField" hidden>
+      <label class="lbl" for="ghostAlpha">Ghost strength</label>
+      <input type="range" id="ghostAlpha" min="15" max="85" step="5" value="50">
+      <p class="hint">Ghost works best when both strings were filmed from the same spot with the phone on a tripod.</p>
+    </div>
+    <button id="btnCloseSettings" class="small">Close settings</button>
   </section>
 
   <section id="menu" class="menu" aria-label="Main menu">
@@ -277,6 +317,29 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
     </div>
     <p class="msg" id="liveMsg" hidden></p>
 
+    <div class="panel setup">
+      <h2>String setup</h2>
+      <div class="setup-grid">
+        <div class="field">
+          <span class="lbl" id="liveShotsLbl">Shots</span>
+          <div class="stepper" role="group" aria-labelledby="liveShotsLbl">
+            <button class="small" data-adj="shots" data-d="-1" aria-label="Fewer shots">−</button>
+            <output class="step-val" data-show="shots">Any</output>
+            <button class="small" data-adj="shots" data-d="1" aria-label="More shots">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl" id="liveParLbl">Time limit</span>
+          <div class="stepper" role="group" aria-labelledby="liveParLbl">
+            <button class="small" data-adj="par" data-d="-1" aria-label="Shorter time limit">−</button>
+            <output class="step-val" data-show="par">None</output>
+            <button class="small" data-adj="par" data-d="1" aria-label="Longer time limit">+</button>
+          </div>
+        </div>
+      </div>
+      <p class="hint" data-show="setupHint"></p>
+    </div>
+
     <div class="controls">
       <button id="btnStart" class="go">Start</button>
       <label class="ghost file" id="fileLbl">Load a video<input type="file" id="fileIn" accept="video/*"></label>
@@ -288,19 +351,29 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
     <div class="player" id="player"><video id="pv" playsinline controls preload="auto"></video><canvas id="pov"></canvas></div>
     <p class="msg" id="revMsg" hidden></p>
 
-    <div class="panel" id="layoutPanel">
-      <div class="tools"><h2 class="grow">Overlay layout</h2><button id="btnLayout" class="small" aria-pressed="false">Move overlays</button></div>
-      <p class="hint" id="layoutHint">Tap Move overlays, then drag the timer and the split box anywhere on the video. Your layout is remembered and used for every saved video.</p>
-      <div class="tools" role="group" aria-label="Layout presets">
-        <button class="small" data-preset="bottom">Bottom</button>
-        <button class="small" data-preset="top">Top</button>
-        <button class="small" data-preset="left">Stack left</button>
-        <button class="small" data-preset="right">Stack right</button>
+    <div class="tools" id="layoutPanel"><button id="btnLayout" class="small" aria-pressed="false">Move overlays</button><span class="hint grow" id="layoutHint">Drag the timer and split box anywhere. Sizes and presets are in Settings.</span></div>
+
+    <div class="panel setup">
+      <h2>String setup</h2>
+      <div class="setup-grid">
+        <div class="field">
+          <span class="lbl" id="revShotsLbl">Shots</span>
+          <div class="stepper" role="group" aria-labelledby="revShotsLbl">
+            <button class="small" data-adj="shots" data-d="-1" aria-label="Fewer shots">−</button>
+            <output class="step-val" data-show="shots">Any</output>
+            <button class="small" data-adj="shots" data-d="1" aria-label="More shots">+</button>
+          </div>
+        </div>
+        <div class="field">
+          <span class="lbl" id="revParLbl">Time limit</span>
+          <div class="stepper" role="group" aria-labelledby="revParLbl">
+            <button class="small" data-adj="par" data-d="-1" aria-label="Shorter time limit">−</button>
+            <output class="step-val" data-show="par">None</output>
+            <button class="small" data-adj="par" data-d="1" aria-label="Longer time limit">+</button>
+          </div>
+        </div>
       </div>
-      <div class="field">
-        <label class="lbl" for="ovScale">Overlay size</label>
-        <input type="range" id="ovScale" min="60" max="160" step="5">
-      </div>
+      <p class="hint" data-show="setupHint"></p>
     </div>
 
     <div class="stats">
@@ -310,6 +383,7 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
       <div class="stat"><span class="lbl">Avg split</span><span class="digits" id="stAvg">–</span></div>
     </div>
 
+    <p class="msg" id="parResult" hidden></p>
     <ol class="shots" id="shotList"></ol>
 
     <div class="tools">
@@ -338,10 +412,7 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
   <section id="compare" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="tools">
       <h2 class="cmp-h grow">Compare draws</h2>
-      <div class="seg" role="group" aria-label="View">
-        <button data-mode="side" aria-pressed="true">Side by side</button>
-        <button data-mode="ghost" aria-pressed="false">Ghost</button>
-      </div>
+      <button id="cmpView" class="small">Side by side</button>
     </div>
 
     <div class="cmp-stage" id="cmpStage">
@@ -386,11 +457,6 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
           </div>
         </div>
       </div>
-      <div class="field" id="ghostField" hidden>
-        <label class="lbl" for="ghostAlpha">Ghost strength</label>
-        <input type="range" id="ghostAlpha" min="15" max="85" step="5" value="50">
-        <p class="hint">Ghost works best when both strings were filmed from the same spot with the phone on a tripod.</p>
-      </div>
       <div class="legend" id="cmpLegend"></div>
     </div>
 
@@ -413,7 +479,7 @@ const store = {
   set(k, v){ try { localStorage.setItem("stc." + k, JSON.stringify(v)); } catch(e){} }
 };
 const BEEP_HZ = 2700, BEEP_DUR = 0.35, LOCK_MS = 70;
-const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4 }, store.get("settings", {}));
+const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0 }, store.get("settings", {}));
 const saveSettings = () => store.set("settings", settings);
 const thrLin = () => Math.pow(10, settings.thrDb / 20);
 
@@ -539,18 +605,44 @@ $("#autoStopSec").onchange = e => { settings.autoStopSec = Math.max(2, Math.min(
 /* ---------- audio ---------- */
 let ac = null;
 function audioCtx(){ if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); return ac; }
-function playBeep(at){
+function playBeep(at, hz, dur){
+  hz = hz || BEEP_HZ; dur = dur || BEEP_DUR;
   const c = audioCtx();
   const o = c.createOscillator(), g = c.createGain();
-  o.type = "sine"; o.frequency.value = BEEP_HZ;
+  o.type = "sine"; o.frequency.value = hz;
   g.gain.setValueAtTime(0, at);
   g.gain.linearRampToValueAtTime(1, at + 0.004);
-  g.gain.setValueAtTime(1, at + BEEP_DUR - 0.01);
-  g.gain.linearRampToValueAtTime(0, at + BEEP_DUR);
+  g.gain.setValueAtTime(1, at + dur - 0.01);
+  g.gain.linearRampToValueAtTime(0, at + dur);
   o.connect(g); g.connect(c.destination);
-  o.start(at); o.stop(at + BEEP_DUR + 0.02);
+  o.start(at); o.stop(at + dur + 0.02);
 }
+/* Time-limit signal: two short lower beeps, so it never sounds like the start. */
+const END_HZ = 1900, END_LEN = 0.45;
+function playEndBeep(at){ playBeep(at, END_HZ, 0.15); playBeep(at + 0.25, END_HZ, 0.15); }
+
+/* ---------- string setup: how many shots, how long ---------- */
+const PAR_STEPS = [0, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30];
+function syncSetupUI(){
+  document.querySelectorAll('[data-show="shots"]').forEach(el => { el.textContent = settings.shots ? String(settings.shots) : "Any"; });
+  document.querySelectorAll('[data-show="par"]').forEach(el => { el.textContent = settings.par ? settings.par.toFixed(1) + " s" : "None"; });
+  const parts = [];
+  parts.push(settings.shots ? "Counts " + (settings.shots === 1 ? "1 shot" : settings.shots + " shots") + ", and a live string stops after the last one" : "Counts every shot");
+  parts.push(settings.par ? "two short beeps at " + settings.par.toFixed(1) + " s mean time's up, and later shots are flagged late" : "no time limit");
+  document.querySelectorAll('[data-show="setupHint"]').forEach(el => { el.textContent = parts.join("; ") + "."; });
+}
+document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => {
+  const d = Number(b.dataset.d);
+  if (b.dataset.adj === "shots") settings.shots = Math.max(0, Math.min(30, settings.shots + d));
+  else {
+    let i = PAR_STEPS.indexOf(settings.par); if (i < 0) i = 0;
+    settings.par = PAR_STEPS[Math.max(0, Math.min(PAR_STEPS.length - 1, i + d))];
+  }
+  saveSettings(); syncSetupUI();
+  if (run && state.mode !== "live") redetect();
+});
 $("#btnTestBeep").onclick = async () => { const c = audioCtx(); await c.resume(); playBeep(c.currentTime + 0.05); };
+$("#btnCloseSettings").onclick = () => { $("#settings").hidden = true; $("#btnSettings").setAttribute("aria-expanded", "false"); };
 
 /* ---------- shot detector (shared by live and clip scan) ---------- */
 function newDet(thr, minT){ return { thr, minT, hist: new Float32Array(40), hi: 0, n: 0, lock: 0 }; }
@@ -699,8 +791,10 @@ async function startRun(){
   const beepAt = c.currentTime + 0.6 + delay;
   const det = newDet(thrLin(), beepAt + BEEP_DUR + 0.02);
   const B = Math.max(1, Math.round(c.sampleRate / 1000));
-  live = { src, proc, mute, det, beepAt, shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
+  const parAt = settings.par ? beepAt + settings.par : null;
+  live = { src, proc, mute, det, beepAt, parAt, par: settings.par, shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
   playBeep(beepAt);
+  if (parAt) playEndBeep(parAt);
 
   proc.onaudioprocess = ev => {
     if (!live) return;
@@ -709,7 +803,8 @@ async function startRun(){
       const a = Math.abs(d[i]); if (a > live.peak) live.peak = a;
       if (++live.acc === B){
         const t = live.t0 + (live.samples + i + 1 - B) / sr;
-        if (stepBlock(live.det, live.peak, t)){ live.shots.push(t); flashFace(); }
+        if (stepBlock(live.det, live.peak, t) && !(live.parAt && t > live.parAt - 0.01 && t < live.parAt + END_LEN)
+            && !(settings.shots && live.shots.length >= settings.shots)){ live.shots.push(t); flashFace(); }
         live.acc = 0; live.peak = 0;
       }
     }
@@ -729,7 +824,11 @@ function tick(){
     setFace("Standby", "0.00", "Split", "–", "Shots 0");
   } else {
     const split = n === 0 ? "–" : fmt(n === 1 ? s[0] - live.beepAt : s[n - 1] - s[n - 2]);
-    setFace(n ? "Time" : "Go", fmt(t - live.beepAt), n === 1 ? "Draw" : "Split", split, "Shots " + n);
+    const over = live.parAt && t > live.parAt;
+    setFace(over ? "Time's up" : n ? "Time" : "Go", fmt(t - live.beepAt), n === 1 ? "Draw" : "Split", split,
+      "Shots " + n + (settings.shots ? " of " + settings.shots : ""));
+    if (settings.shots && n >= settings.shots && t - s[n - 1] > 1.5){ stopRun(); return; }
+    if (live.parAt && t > live.parAt + 1.5 && (!n || t - s[n - 1] > 1.5)){ stopRun(); return; }
     if (settings.autoStop && n && t - s[n - 1] > settings.autoStopSec){ stopRun(); return; }
     if (!n && t - live.beepAt > 60){ stopRun(); return; }
   }
@@ -742,6 +841,7 @@ function stopRun(){
   live.proc.onaudioprocess = null;
   try { live.src.disconnect(); live.proc.disconnect(); live.mute.disconnect(); } catch(e){}
   const s = live.shots;
+  lastParRec = live.par || 0;
   if (s.length) setFace("Time", fmt(s[s.length - 1] - live.beepAt), s.length === 1 ? "Draw" : "Split",
     fmt(s.length === 1 ? s[0] - live.beepAt : s[s.length - 1] - s[s.length - 2]), "Shots " + s.length);
   live = null;
@@ -751,6 +851,7 @@ function stopRun(){
   $("#recDot").hidden = true;
   try { rec.stop(); } catch(e){ resetLive(); }
 }
+let lastParRec = 0;
 function resetLive(){
   state.mode = "idle";
   $("#btnStart").textContent = "Start"; $("#btnStart").disabled = false; $("#btnStart").classList.remove("stop");
@@ -798,7 +899,7 @@ async function loadRun(blob, ext, isLive){
     const sr = audio.sampleRate, len = audio.length, pcm = new Float32Array(len);
     for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
     if (run && run.url) URL.revokeObjectURL(run.url);
-    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now() };
+    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now(), parRec: isLive ? lastParRec : 0 };
     const noBeep = !run.beep;
     /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
     if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
@@ -826,7 +927,11 @@ async function loadRun(blob, ext, isLive){
 
 function redetect(){
   if (!run) return;
-  run.shots = run.beep ? detectShots(run.pcm, run.sr, run.beep.t + run.beep.dur + 0.02, settings.thrDb) : [];
+  let shots = run.beep ? detectShots(run.pcm, run.sr, run.beep.t + run.beep.dur + 0.02, settings.thrDb) : [];
+  /* the app's own time-up beeps are not shots */
+  if (run.parRec && run.beep){ const pb = run.beep.t + run.parRec; shots = shots.filter(t => t < pb - 0.01 || t > pb + END_LEN); }
+  if (settings.shots) shots = shots.slice(0, settings.shots);
+  run.shots = shots;
   render();
 }
 function splitsOf(shots, b){ return shots.map((t, i) => i === 0 ? t - b : t - shots[i - 1]); }
@@ -841,6 +946,7 @@ function render(){
     const li = document.createElement("li"); const span = document.createElement("span"); span.className = "empty";
     span.textContent = b == null ? "Set the start beep to find shots." : "No shots found. Raise the sensitivity, or add shots at the playhead.";
     li.style.display = "block"; li.appendChild(span); list.appendChild(li);
+    showParResult([], b);
     drawPreview(); return;
   }
   const sp = splitsOf(s, b), rest = sp.slice(1);
@@ -849,6 +955,7 @@ function render(){
   $("#stDraw").textContent = fmt(sp[0]);
   $("#stBest").textContent = fmt(best);
   $("#stAvg").textContent = rest.length ? fmt(rest.reduce((a, c) => a + c, 0) / rest.length) : "–";
+  showParResult(s, b);
   s.forEach((t, i) => {
     const li = document.createElement("li");
     const n = document.createElement("span"); n.className = "n"; n.textContent = String(i + 1).padStart(2, "0");
@@ -856,6 +963,7 @@ function render(){
     tm.setAttribute("aria-label", "Jump to shot " + (i + 1)); tm.onclick = () => { pv.currentTime = Math.max(0, t - 0.6); pv.play().catch(() => {}); };
     const spl = document.createElement("span"); spl.textContent = (i === 0 ? "draw " : "") + fmt(sp[i]);
     if (i > 0 && sp[i] === best) spl.className = "best";
+    if (settings.par && t - b > settings.par + 0.005){ tm.classList.add("late"); tm.textContent += " late"; }
     const del = document.createElement("button"); del.className = "small del"; del.textContent = "×";
     del.setAttribute("aria-label", "Remove shot " + (i + 1));
     del.onclick = () => { run.shots.splice(i, 1); render(); };
@@ -882,6 +990,19 @@ async function persistRun(first){
   } catch(e){
     if (first) toast("Couldn't save this string on the phone. Storage may be full.");
   }
+}
+function showParResult(s, b){
+  const el = $("#parResult"), bits = [];
+  if (settings.shots && b != null){
+    bits.push(s.length >= settings.shots ? "All " + settings.shots + " shots found." : "Found " + s.length + " of " + settings.shots + " shots. Raise the sensitivity or add the missing ones.");
+  }
+  if (settings.par && b != null && s.length){
+    const total = s[s.length - 1] - b, late = s.filter(t => t - b > settings.par + 0.005).length;
+    bits.push(late
+      ? "Over the " + settings.par.toFixed(1) + " s limit by " + fmt(total - settings.par) + ". " + late + (late === 1 ? " shot was" : " shots were") + " late."
+      : "Made the " + settings.par.toFixed(1) + " s limit with " + fmt(settings.par - total) + " to spare.");
+  }
+  showMsg(el, bits.join(" "), settings.par && s.length && b != null && s[s.length - 1] - b > settings.par + 0.005);
 }
 $("#btnAdd").onclick = () => {
   if (!run) return;
@@ -1027,7 +1148,7 @@ function setEditLayout(on){
   const b = $("#btnLayout"); b.textContent = on ? "Done" : "Move overlays"; b.setAttribute("aria-pressed", String(on));
   $("#layoutHint").textContent = on
     ? "Drag the timer and the split box. Tap Done when they're where you want them."
-    : "Tap Move overlays, then drag the timer and the split box anywhere on the video. Your layout is remembered and used for every saved video.";
+    : "Drag the timer and split box anywhere. Sizes and presets are in Settings.";
   drawPreview();
 }
 $("#btnLayout").onclick = () => setEditLayout(!editLayout);
@@ -1340,7 +1461,12 @@ function renderLegend(){
 function setModeUI(){
   document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === cmp.mode)));
   $("#ghostField").hidden = cmp.mode !== "ghost";
+  $("#cmpView").textContent = cmp.mode === "ghost" ? "View: Ghost" : "View: Side by side";
 }
+$("#cmpView").onclick = () => {
+  cmp.mode = cmp.mode === "ghost" ? "side" : "ghost"; store.set("cmpMode", cmp.mode); setModeUI();
+  if (cmp.a){ sizeCanvas(); drawCompare(); }
+};
 document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
   cmp.mode = b.dataset.mode; store.set("cmpMode", cmp.mode); setModeUI();
   if (cmp.a){ sizeCanvas(); drawCompare(); }
@@ -1462,6 +1588,8 @@ async function saveBlob(blob, name){
 }
 $("#btnSave").onclick = exportVideo;
 refreshRunCount();
+syncSetupUI();
+setModeUI();
 /* Test hook, only when the address ends in #test */
 if (location.hash === "#test") window.__stc = { loadRun: (b, ext) => loadRun(b, ext, true), DB };
 })();
