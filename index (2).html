@@ -1,0 +1,882 @@
+<title>Shot Timer Cam</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@500;600;700&family=Barlow:wght@400;500;600&family=Share+Tech+Mono&display=swap">
+<style>
+/* Layout: one machined-steel column. Camera, then the timer face, then two controls. Review swaps in below. */
+:root{
+  --bg:#0a0b0d;
+  --panel:#141619;
+  --panel-2:#1b1e22;
+  --line:#2c3036;
+  --steel:#828993;
+  --silver:#d6d9de;
+  --white:#f3f4f6;
+  --hot:#e5484d;
+  --chrome:linear-gradient(180deg,#f5f6f8 0%,#c4c9cf 46%,#8e949c 54%,#e3e6ea 100%);
+  --brushed:repeating-linear-gradient(90deg,rgba(255,255,255,.028) 0 1px,transparent 1px 3px),linear-gradient(180deg,#1d2024,#121417);
+  --f-display:"Barlow Condensed","Arial Narrow",Arial,sans-serif;
+  --f-body:"Barlow",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  --f-digits:"Share Tech Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  color-scheme:dark;
+}
+html,body{background:var(--bg);color:var(--silver)}
+body{
+  font-family:var(--f-body);font-size:15px;line-height:1.45;
+  padding-left:max(16px,env(safe-area-inset-left,0px));
+  padding-right:max(16px,env(safe-area-inset-right,0px));
+  padding-block:14px 32px;
+}
+.app{max-width:560px;margin:0 auto;display:flex;flex-direction:column;gap:14px}
+button,input,label{font:inherit;color:inherit}
+button:focus-visible,label.file:focus-within,input:focus-visible{outline:2px solid var(--silver);outline-offset:2px}
+
+header{display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{font-family:var(--f-display);font-weight:700;font-size:1.3rem;letter-spacing:.16em;text-transform:uppercase;line-height:1.05;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent}
+.brand small{display:block;font-weight:500;font-size:.6rem;letter-spacing:.28em;color:var(--steel)}
+
+.lbl{font-family:var(--f-display);font-weight:600;font-size:.74rem;letter-spacing:.18em;text-transform:uppercase;color:var(--steel)}
+.digits{font-family:var(--f-digits);font-variant-numeric:tabular-nums;line-height:1;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent}
+
+.ghost,.go,.small{border-radius:10px;cursor:pointer;border:1px solid var(--line);background:var(--panel-2);padding:12px 16px;
+  font-family:var(--f-display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:.9rem;color:var(--silver);
+  display:inline-flex;align-items:center;justify-content:center;gap:8px;min-height:48px;text-align:center}
+.ghost:hover{border-color:var(--steel)}
+.small{min-height:38px;padding:7px 12px;font-size:.78rem}
+.go{background:var(--chrome);color:#121417;border-color:#9aa0a8;font-weight:700;font-size:1.05rem;letter-spacing:.2em;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 1px 0 rgba(0,0,0,.6)}
+.go:active{filter:brightness(.92)}
+.go.stop{background:#1a0e0f;color:#ffd9da;border-color:var(--hot);box-shadow:0 0 0 3px rgba(229,72,77,.18)}
+button:disabled{opacity:.45;cursor:not-allowed}
+label.file{position:relative;overflow:hidden}
+label.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
+
+.viewport{position:relative;width:100%;max-width:100%;aspect-ratio:16/9;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.viewport video{width:100%;height:100%;object-fit:contain;display:block}
+.placeholder{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:16px;text-align:center;
+  background:radial-gradient(120% 90% at 50% 0%,#1d2024 0%,#08090a 70%)}
+.placeholder p{margin:0;max-width:30ch;color:var(--silver);text-wrap:balance}
+.rec{position:absolute;top:10px;left:10px;display:flex;align-items:center;gap:6px;background:rgba(0,0,0,.6);border-radius:999px;padding:4px 10px 4px 8px;
+  font-family:var(--f-display);font-weight:700;letter-spacing:.16em;font-size:.72rem;color:#ffd9da}
+.rec::before{content:"";width:9px;height:9px;border-radius:50%;background:var(--hot);animation:blink 1s steps(2,start) infinite}
+@keyframes blink{to{visibility:hidden}}
+
+.face{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:end;padding:16px 18px;border-radius:14px;border:1px solid var(--line);background:var(--brushed)}
+.face-main,.face-side{display:flex;flex-direction:column;gap:6px;min-width:0}
+.face-side{align-items:flex-end;text-align:right}
+.face .digits{font-size:clamp(3.6rem,19vw,5.6rem)}
+.face .digits.sm{font-size:clamp(1.8rem,9vw,2.6rem)}
+.face.flash{border-color:var(--silver)}
+
+.controls{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
+.msg{margin:0;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);color:var(--silver);font-size:.92rem}
+.msg.warn{border-color:#5a3436;background:#1a1213}
+
+.panel{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:16px}
+.panel h2{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:.95rem;color:var(--white)}
+.field{display:flex;flex-direction:column;gap:8px}
+.field-row{display:flex;flex-wrap:wrap;align-items:center;gap:8px}
+.field input[type=number]{width:5.2em;padding:8px 10px;border-radius:8px;border:1px solid var(--line);background:var(--bg);font-family:var(--f-digits)}
+.hint{font-size:.85rem;color:var(--steel);margin:0}
+input[type=range]{width:100%;accent-color:#c4c9cf}
+.sens-scale{display:flex;justify-content:space-between}
+.check{display:flex;align-items:center;gap:8px}
+.check input{width:20px;height:20px;accent-color:#c4c9cf}
+
+.player{position:relative;width:100%;max-width:100%;background:#000;border-radius:14px;overflow:hidden;border:1px solid var(--line)}
+.player video{display:block;width:100%;height:100%}
+.player canvas{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+.player canvas.editing{pointer-events:auto;cursor:move;touch-action:none}
+.player.editing{border-color:var(--silver);box-shadow:0 0 0 3px rgba(214,217,222,.15)}
+.small[aria-pressed="true"]{background:var(--chrome);color:#121417;border-color:#9aa0a8}
+
+.stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.stat{background:var(--brushed);padding:12px 10px;display:flex;flex-direction:column;gap:6px;min-width:0}
+.stat .digits{font-size:clamp(1.3rem,6vw,1.9rem)}
+.stat.lead .digits{font-size:clamp(1.6rem,8vw,2.4rem)}
+@media (max-width:420px){.stats{grid-template-columns:repeat(2,minmax(0,1fr))}}
+
+.shots{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.shots li{display:grid;grid-template-columns:3.2em 1fr 1fr auto;align-items:center;gap:8px;padding:6px 8px 6px 14px;border-top:1px solid var(--line);
+  font-family:var(--f-digits);font-variant-numeric:tabular-nums}
+.shots li:first-child{border-top:0}
+.shots li.head{font-family:var(--f-display);font-weight:600;letter-spacing:.16em;text-transform:uppercase;font-size:.72rem;color:var(--steel);padding-block:10px}
+.shots .n{color:var(--steel)}
+.shots .seek{all:unset;cursor:pointer;color:var(--white)}
+.shots .seek:focus-visible{outline:2px solid var(--silver)}
+.shots .best{color:var(--white);text-decoration:underline;text-underline-offset:4px;text-decoration-color:var(--steel)}
+.shots .del{width:36px;height:36px;min-height:0;padding:0;border-radius:8px;font-size:1.1rem}
+.shots .empty{display:block;padding:14px;font-family:var(--f-body);color:var(--steel)}
+
+.tools{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.tools .grow{flex:1 1 auto}
+.beep-at{font-family:var(--f-digits);color:var(--white)}
+.progress{display:flex;align-items:center;gap:10px}
+.bar{flex:1;height:8px;border-radius:99px;background:var(--panel-2);overflow:hidden;border:1px solid var(--line)}
+.bar i{display:block;height:100%;width:0;background:var(--chrome)}
+.progress span{font-family:var(--f-digits);min-width:3.5em;text-align:right}
+.foot{margin:6px 0 0;font-size:.84rem;color:var(--steel)}
+.safety{border:1px solid var(--steel);border-radius:14px;background:var(--brushed);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.safety h2{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:.18em;text-transform:uppercase;font-size:1rem;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent}
+.safety ul{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px;color:var(--white)}
+.safety p{margin:0;font-size:.88rem;color:var(--silver)}
+.safety .small{align-self:flex-start}
+.locked{opacity:.32;filter:grayscale(1);pointer-events:none;user-select:none}
+.unlock-hint{font-family:var(--f-display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--steel)}
+.toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--steel);
+  color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
+@media (prefers-reduced-motion:reduce){.rec::before{animation:none}}
+</style>
+
+<div class="app">
+  <header>
+    <div class="brand">Shot Timer Cam<small>Video · Splits · Overlay</small></div>
+    <button id="btnSettings" class="small locked" inert aria-expanded="false" aria-controls="settings">Settings</button>
+  </header>
+
+  <section class="safety" id="safety" role="note" aria-labelledby="safetyTitle">
+    <h2 id="safetyTitle">Safety first</h2>
+    <ul>
+      <li>Treat every firearm as if it's loaded.</li>
+      <li>Keep the muzzle pointed in a safe direction.</li>
+      <li>Keep your finger off the trigger until you're on target.</li>
+      <li>Know your target and what's beyond it.</li>
+    </ul>
+    <p>Set the phone up before you start, and don't handle it with a firearm in your hand. Turn on auto-stop in Settings so the recording ends on its own. No time is worth a safety mistake.</p>
+    <div class="tools"><button id="btnSafetyOk" class="go">Got it</button><span class="unlock-hint">Tap to unlock the app</span></div>
+  </section>
+
+  <section id="settings" class="panel" hidden>
+    <h2>Settings</h2>
+    <div class="field">
+      <span class="lbl">Random start delay</span>
+      <div class="field-row">
+        <input type="number" id="delayMin" min="0.5" max="10" step="0.5" aria-label="Shortest delay in seconds">
+        <span>to</span>
+        <input type="number" id="delayMax" min="0.5" max="10" step="0.5" aria-label="Longest delay in seconds">
+        <span>seconds after you tap Start</span>
+      </div>
+    </div>
+    <div class="field">
+      <label class="lbl" for="sens">Shot sensitivity</label>
+      <input type="range" id="sens" min="0" max="27" step="1">
+      <div class="sens-scale hint"><span>Low · outdoor, busy range</span><span id="sensVal"></span><span>High · quiet calibers</span></div>
+    </div>
+    <div class="field">
+      <label class="check"><input type="checkbox" id="autoStop"> Stop recording automatically</label>
+      <div class="field-row hint">after <input type="number" id="autoStopSec" min="2" max="30" step="1" aria-label="Seconds of quiet before stopping"> seconds with no shots</div>
+    </div>
+    <div class="tools"><button id="btnTestBeep" class="small">Test beep</button><p class="hint">Turn media volume up. The beep is recorded in the video so the app can find it.</p></div>
+  </section>
+
+  <section id="live" class="locked" inert style="display:flex;flex-direction:column;gap:14px">
+    <div class="viewport" id="viewport">
+      <video id="cam" playsinline muted></video>
+      <div class="placeholder" id="camPh">
+        <p>Set the phone where it sees you and the targets.</p>
+        <button id="btnCam" class="ghost">Turn on camera</button>
+      </div>
+      <div class="rec" id="recDot" hidden>REC</div>
+    </div>
+
+    <div class="face" id="face">
+      <div class="face-main"><span class="lbl" id="faceLbl">Ready</span><span class="digits" id="faceTime">0.00</span></div>
+      <div class="face-side"><span class="lbl" id="faceSplitLbl">Split</span><span class="digits sm" id="faceSplit">–</span><span class="lbl" id="faceShots">Shots 0</span></div>
+    </div>
+    <p class="msg" id="liveMsg" hidden></p>
+
+    <div class="controls">
+      <button id="btnStart" class="go">Start</button>
+      <label class="ghost file" id="fileLbl">Load a video<input type="file" id="fileIn" accept="video/*"></label>
+    </div>
+    <p class="hint">Start turns on recording, waits a random delay, then beeps. Shoot on the beep. Times on screen are a live preview; the saved video uses the exact times from the recording.</p>
+  </section>
+
+  <section id="review" hidden style="flex-direction:column;gap:14px">
+    <div class="player" id="player"><video id="pv" playsinline controls preload="auto"></video><canvas id="pov"></canvas></div>
+    <p class="msg" id="revMsg" hidden></p>
+
+    <div class="panel" id="layoutPanel">
+      <div class="tools"><h2 class="grow">Overlay layout</h2><button id="btnLayout" class="small" aria-pressed="false">Move overlays</button></div>
+      <p class="hint" id="layoutHint">Tap Move overlays, then drag the timer and the split box anywhere on the video. Your layout is remembered and used for every saved video.</p>
+      <div class="tools" role="group" aria-label="Layout presets">
+        <button class="small" data-preset="bottom">Bottom</button>
+        <button class="small" data-preset="top">Top</button>
+        <button class="small" data-preset="left">Stack left</button>
+        <button class="small" data-preset="right">Stack right</button>
+      </div>
+      <div class="field">
+        <label class="lbl" for="ovScale">Overlay size</label>
+        <input type="range" id="ovScale" min="60" max="160" step="5">
+      </div>
+    </div>
+
+    <div class="stats">
+      <div class="stat lead"><span class="lbl">Total</span><span class="digits" id="stTotal">–</span></div>
+      <div class="stat"><span class="lbl">Draw</span><span class="digits" id="stDraw">–</span></div>
+      <div class="stat"><span class="lbl">Best split</span><span class="digits" id="stBest">–</span></div>
+      <div class="stat"><span class="lbl">Avg split</span><span class="digits" id="stAvg">–</span></div>
+    </div>
+
+    <ol class="shots" id="shotList"></ol>
+
+    <div class="tools">
+      <button id="btnAdd" class="small">Add shot at playhead</button>
+      <button id="btnBeepHere" class="small">Set beep at playhead</button>
+    </div>
+    <div class="tools">
+      <span class="lbl">Start beep</span><span class="beep-at" id="beepAt">–</span>
+      <button id="beepMinus" class="small" aria-label="Move beep 10 milliseconds earlier">−0.01</button>
+      <button id="beepPlus" class="small" aria-label="Move beep 10 milliseconds later">+0.01</button>
+    </div>
+    <div class="field">
+      <label class="lbl" for="sens2">Shot sensitivity · re-scans the clip</label>
+      <input type="range" id="sens2" min="0" max="27" step="1">
+      <p class="hint">Missing shots: slide right. Echoes or other bays counted: slide left. You can also remove or add single shots above.</p>
+    </div>
+
+    <div class="controls">
+      <button id="btnSave" class="go">Save video</button>
+      <button id="btnNew" class="ghost">New run</button>
+    </div>
+    <div class="progress" id="prog" hidden><div class="bar"><i id="progBar"></i></div><span id="progTxt">0%</span></div>
+    <p class="hint">Saving plays the clip through once at normal speed while it burns in the times, so keep this screen open until it finishes.</p>
+  </section>
+
+  <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Splits are to 1/100 s.</p>
+</div>
+
+<script>
+(() => {
+"use strict";
+const $ = s => document.querySelector(s);
+const fmt = t => (t == null || !isFinite(t)) ? "–" : Math.max(0, t).toFixed(2);
+const store = {
+  get(k, d){ try { const v = localStorage.getItem("stc." + k); return v == null ? d : JSON.parse(v); } catch(e){ return d; } },
+  set(k, v){ try { localStorage.setItem("stc." + k, JSON.stringify(v)); } catch(e){} }
+};
+const BEEP_HZ = 2700, BEEP_DUR = 0.35, LOCK_MS = 70;
+const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4 }, store.get("settings", {}));
+const saveSettings = () => store.set("settings", settings);
+const thrLin = () => Math.pow(10, settings.thrDb / 20);
+
+/* ---------- safety banner: shown every time the app opens ---------- */
+/* Everything stays locked (inert) until the shooter taps Got it. */
+$("#btnSafetyOk").onclick = () => {
+  $("#safety").hidden = true;
+  document.querySelectorAll(".locked").forEach(el => { el.inert = false; el.removeAttribute("inert"); el.classList.remove("locked"); });
+};
+
+/* ---------- downloads (Claude viewer) ---------- */
+let dlCap = null;
+try { if (window.claude && window.claude.use) window.claude.use("downloads").then(d => { dlCap = d; }).catch(() => {}); } catch(e){}
+
+/* ---------- toast ---------- */
+let toastT = 0;
+function toast(msg){
+  let el = $(".toast");
+  if (!el){ el = document.createElement("div"); el.className = "toast"; el.setAttribute("role","status"); document.body.appendChild(el); }
+  el.textContent = msg; el.hidden = false;
+  clearTimeout(toastT); toastT = setTimeout(() => { el.hidden = true; }, 3200);
+}
+function showMsg(el, text, warn){ el.textContent = text; el.className = "msg" + (warn ? " warn" : ""); el.hidden = !text; }
+
+/* ---------- settings UI ---------- */
+const sensToSlider = db => -3 - db;            // -3 dB (low) .. -30 dB (high)
+const sliderToSens = v => -3 - Number(v);
+function syncSettingsUI(){
+  $("#delayMin").value = settings.delayMin;
+  $("#delayMax").value = settings.delayMax;
+  $("#sens").value = sensToSlider(settings.thrDb);
+  $("#sens2").value = sensToSlider(settings.thrDb);
+  $("#sensVal").textContent = settings.thrDb + " dB";
+  $("#autoStop").checked = settings.autoStop;
+  $("#autoStopSec").value = settings.autoStopSec;
+}
+syncSettingsUI();
+$("#btnSettings").onclick = () => {
+  const p = $("#settings"); p.hidden = !p.hidden;
+  $("#btnSettings").setAttribute("aria-expanded", String(!p.hidden));
+};
+$("#delayMin").onchange = e => { settings.delayMin = Math.max(0.5, Math.min(10, +e.target.value || 1.5)); if (settings.delayMax < settings.delayMin) settings.delayMax = settings.delayMin; saveSettings(); syncSettingsUI(); };
+$("#delayMax").onchange = e => { settings.delayMax = Math.max(settings.delayMin, Math.min(10, +e.target.value || 4)); saveSettings(); syncSettingsUI(); };
+$("#sens").oninput = e => { settings.thrDb = sliderToSens(e.target.value); saveSettings(); syncSettingsUI(); if (live) live.det.thr = thrLin(); };
+$("#sens2").onchange = e => { settings.thrDb = sliderToSens(e.target.value); saveSettings(); syncSettingsUI(); if (run) { redetect(); toast("Re-scanned at " + settings.thrDb + " dB"); } };
+$("#autoStop").onchange = e => { settings.autoStop = e.target.checked; saveSettings(); };
+$("#autoStopSec").onchange = e => { settings.autoStopSec = Math.max(2, Math.min(30, +e.target.value || 4)); saveSettings(); syncSettingsUI(); };
+
+/* ---------- audio ---------- */
+let ac = null;
+function audioCtx(){ if (!ac) ac = new (window.AudioContext || window.webkitAudioContext)(); return ac; }
+function playBeep(at){
+  const c = audioCtx();
+  const o = c.createOscillator(), g = c.createGain();
+  o.type = "sine"; o.frequency.value = BEEP_HZ;
+  g.gain.setValueAtTime(0, at);
+  g.gain.linearRampToValueAtTime(1, at + 0.004);
+  g.gain.setValueAtTime(1, at + BEEP_DUR - 0.01);
+  g.gain.linearRampToValueAtTime(0, at + BEEP_DUR);
+  o.connect(g); g.connect(c.destination);
+  o.start(at); o.stop(at + BEEP_DUR + 0.02);
+}
+$("#btnTestBeep").onclick = async () => { const c = audioCtx(); await c.resume(); playBeep(c.currentTime + 0.05); };
+
+/* ---------- shot detector (shared by live and clip scan) ---------- */
+function newDet(thr, minT){ return { thr, minT, hist: new Float32Array(40), hi: 0, n: 0, lock: 0 }; }
+function stepBlock(s, p, t){
+  let shot = false;
+  if (s.lock > 0) s.lock--;
+  else if (p >= s.thr && t >= s.minT){
+    let m = 0; const k = s.n;
+    for (let j = 0; j < k; j++) m += s.hist[j];
+    m = k ? m / k : 0;
+    if (p > m * 2.5){ shot = true; s.lock = LOCK_MS; }
+  }
+  s.hist[s.hi] = p; s.hi = (s.hi + 1) % 40; if (s.n < 40) s.n++;
+  return shot;
+}
+function detectShots(pcm, sr, minT, thrDb){
+  const thr = Math.pow(10, thrDb / 20), B = Math.max(1, Math.round(sr / 1000));
+  const s = newDet(thr, minT), out = [], half = thr * 0.5;
+  for (let o = 0; o + B <= pcm.length; o += B){
+    let p = 0;
+    for (let i = 0; i < B; i++){ const a = Math.abs(pcm[o + i]); if (a > p) p = a; }
+    if (stepBlock(s, p, o / sr)){
+      let k = o; while (k < o + B && Math.abs(pcm[k]) < half) k++;
+      out.push(k / sr);
+    }
+  }
+  return out;
+}
+
+/* ---------- beep finder ---------- */
+function fft(re, im){
+  const n = re.length;
+  for (let i = 1, j = 0; i < n; i++){
+    let bit = n >> 1; for (; j & bit; bit >>= 1) j ^= bit; j ^= bit;
+    if (i < j){ let t = re[i]; re[i] = re[j]; re[j] = t; t = im[i]; im[i] = im[j]; im[j] = t; }
+  }
+  for (let len = 2; len <= n; len <<= 1){
+    const ang = -2 * Math.PI / len, wr = Math.cos(ang), wi = Math.sin(ang), h = len >> 1;
+    for (let i = 0; i < n; i += len){
+      let cr = 1, ci = 0;
+      for (let k = 0; k < h; k++){
+        const a = i + k, b = a + h;
+        const xr = re[b] * cr - im[b] * ci, xi = re[b] * ci + im[b] * cr;
+        re[b] = re[a] - xr; im[b] = im[a] - xi; re[a] += xr; im[a] += xi;
+        const ncr = cr * wr - ci * wi; ci = cr * wi + ci * wr; cr = ncr;
+      }
+    }
+  }
+}
+function goertzel(x, start, W, f, sr){
+  const k = 2 * Math.cos(2 * Math.PI * f / sr); let s1 = 0, s2 = 0;
+  for (let i = 0; i < W; i++){ const v = x[start + i] || 0; const s = v + k * s1 - s2; s2 = s1; s1 = s; }
+  return s1 * s1 + s2 * s2 - k * s1 * s2;
+}
+function detectBeep(pcm, sr){
+  const N = 1024, hop = Math.round(sr * 0.01);
+  const lo = Math.floor(1200 * N / sr), hi = Math.ceil(5000 * N / sr);
+  const re = new Float32Array(N), im = new Float32Array(N), win = new Float32Array(N);
+  for (let i = 0; i < N; i++) win[i] = 0.5 - 0.5 * Math.cos(2 * Math.PI * i / (N - 1));
+  const frames = Math.floor((pcm.length - N) / hop);
+  let run = null, found = null;
+  for (let f = 0; f < frames; f++){
+    const o = f * hop;
+    for (let i = 0; i < N; i++){ re[i] = pcm[o + i] * win[i]; im[i] = 0; }
+    fft(re, im);
+    let pk = 0, pb = -1, sum = 0;
+    for (let b = lo; b <= hi; b++){ const m = Math.hypot(re[b], im[b]); sum += m; if (m > pk){ pk = m; pb = b; } }
+    const mean = sum / (hi - lo + 1);
+    const tonal = pk > mean * 12 && pk > N * 0.003;
+    if (found){
+      if (tonal && Math.abs(pb - found.bin) <= 2) { found.len++; continue; }
+      break;
+    }
+    if (tonal){
+      if (run && Math.abs(pb - run.bin) <= 2) run.len++; else run = { start: f, bin: pb, len: 1 };
+      if (run.len >= 12) found = run;
+    } else run = null;
+  }
+  if (!found) return null;
+  const freq = found.bin * sr / N, W = Math.round(sr * 0.004), step = Math.max(1, Math.round(sr * 0.0005));
+  const ref = goertzel(pcm, (found.start + Math.floor(found.len / 2)) * hop, W, freq, sr);
+  const s0 = Math.max(0, found.start * hop - N), s1 = found.start * hop + N;
+  let onset = found.start * hop + N / 2;
+  for (let s = s0; s < s1; s += step){ if (goertzel(pcm, s, W, freq, sr) >= ref * 0.25){ onset = s + W / 2; break; } }
+  const t = onset / sr;
+  const end = (found.start + found.len) * hop / sr + N / sr * 0.5;
+  return { t, dur: Math.max(0.1, end - t), freq, auto: true };
+}
+
+/* ---------- live recording ---------- */
+let stream = null, rec = null, chunks = [], live = null, wake = null;
+const state = { mode: "idle" };
+function pickMime(){
+  if (!window.MediaRecorder) return "";
+  const list = ["video/mp4;codecs=avc1.42E01E,mp4a.40.2", "video/mp4", "video/webm;codecs=vp9,opus", "video/webm;codecs=vp8,opus", "video/webm"];
+  for (const m of list) if (MediaRecorder.isTypeSupported(m)) return m;
+  return "";
+}
+async function ensureCamera(){
+  if (stream) return stream;
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw Object.assign(new Error("nocam"), { name: "NotSupportedError" });
+  stream = await navigator.mediaDevices.getUserMedia({
+    video: { facingMode: { ideal: "environment" }, width: { ideal: 1920 }, height: { ideal: 1080 }, frameRate: { ideal: 30 } },
+    audio: { echoCancellation: false, noiseSuppression: false, autoGainControl: false }
+  });
+  const v = $("#cam"); v.srcObject = stream; v.muted = true;
+  await v.play().catch(() => {});
+  const vt = stream.getVideoTracks()[0], st = vt && vt.getSettings ? vt.getSettings() : {};
+  if (st.width && st.height) $("#viewport").style.aspectRatio = st.width + " / " + st.height;
+  $("#camPh").hidden = true;
+  showMsg($("#liveMsg"), "");
+  return stream;
+}
+function camError(e){
+  const blocked = e && (e.name === "NotAllowedError" || e.name === "SecurityError" || e.name === "NotSupportedError");
+  showMsg($("#liveMsg"), blocked
+    ? "The camera and microphone aren't available here. Inside Claude they're blocked; open the app from its own web address to record live. You can still load a clip you recorded with your camera app."
+    : "Couldn't start the camera (" + (e && e.message || "unknown error") + "). Close other apps using the camera and try again.", true);
+}
+$("#btnCam").onclick = async () => { try { await ensureCamera(); } catch(e){ camError(e); } };
+
+function setFace(lbl, time, splitLbl, split, shots){
+  $("#faceLbl").textContent = lbl; $("#faceTime").textContent = time;
+  $("#faceSplitLbl").textContent = splitLbl; $("#faceSplit").textContent = split; $("#faceShots").textContent = shots;
+}
+async function requestWake(){ try { if (navigator.wakeLock) wake = await navigator.wakeLock.request("screen"); } catch(e){} }
+function releaseWake(){ try { wake && wake.release(); } catch(e){} wake = null; }
+
+async function startRun(){
+  try { await ensureCamera(); } catch(e){ camError(e); return; }
+  if (!window.MediaRecorder){ showMsg($("#liveMsg"), "This browser can't record video. Use Chrome on your phone.", true); return; }
+  const c = audioCtx(); await c.resume();
+  const mime = pickMime(); chunks = [];
+  try { rec = new MediaRecorder(stream, mime ? { mimeType: mime, videoBitsPerSecond: 10e6 } : {}); }
+  catch(e){ rec = new MediaRecorder(stream); }
+  rec.ondataavailable = e => { if (e.data && e.data.size) chunks.push(e.data); };
+  rec.onstop = onRecStop;
+  rec.start(1000);
+  requestWake();
+
+  const src = c.createMediaStreamSource(stream);
+  const proc = c.createScriptProcessor(1024, 1, 1);
+  const mute = c.createGain(); mute.gain.value = 0;
+  src.connect(proc); proc.connect(mute); mute.connect(c.destination);
+  const delay = settings.delayMin + Math.random() * Math.max(0, settings.delayMax - settings.delayMin);
+  const beepAt = c.currentTime + 0.6 + delay;
+  const det = newDet(thrLin(), beepAt + BEEP_DUR + 0.02);
+  const B = Math.max(1, Math.round(c.sampleRate / 1000));
+  live = { src, proc, mute, det, beepAt, shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
+  playBeep(beepAt);
+
+  proc.onaudioprocess = ev => {
+    if (!live) return;
+    const d = ev.inputBuffer.getChannelData(0), sr = c.sampleRate;
+    for (let i = 0; i < d.length; i++){
+      const a = Math.abs(d[i]); if (a > live.peak) live.peak = a;
+      if (++live.acc === B){
+        const t = live.t0 + (live.samples + i + 1 - B) / sr;
+        if (stepBlock(live.det, live.peak, t)){ live.shots.push(t); flashFace(); }
+        live.acc = 0; live.peak = 0;
+      }
+    }
+    live.samples += d.length;
+  };
+
+  state.mode = "live";
+  $("#btnStart").textContent = "Stop"; $("#btnStart").classList.add("stop");
+  $("#fileLbl").hidden = true; $("#recDot").hidden = false;
+  tick();
+}
+function flashFace(){ const f = $("#face"); f.classList.add("flash"); setTimeout(() => f.classList.remove("flash"), 140); }
+function tick(){
+  if (!live) return;
+  const t = audioCtx().currentTime, s = live.shots, n = s.length;
+  if (t < live.beepAt){
+    setFace("Standby", "0.00", "Split", "–", "Shots 0");
+  } else {
+    const split = n === 0 ? "–" : fmt(n === 1 ? s[0] - live.beepAt : s[n - 1] - s[n - 2]);
+    setFace(n ? "Time" : "Go", fmt(t - live.beepAt), n === 1 ? "Draw" : "Split", split, "Shots " + n);
+    if (settings.autoStop && n && t - s[n - 1] > settings.autoStopSec){ stopRun(); return; }
+    if (!n && t - live.beepAt > 60){ stopRun(); return; }
+  }
+  if (performance.now() - live.started > 180000){ stopRun(); return; }
+  live.raf = requestAnimationFrame(tick);
+}
+function stopRun(){
+  if (!live) return;
+  cancelAnimationFrame(live.raf);
+  live.proc.onaudioprocess = null;
+  try { live.src.disconnect(); live.proc.disconnect(); live.mute.disconnect(); } catch(e){}
+  const s = live.shots;
+  if (s.length) setFace("Time", fmt(s[s.length - 1] - live.beepAt), s.length === 1 ? "Draw" : "Split",
+    fmt(s.length === 1 ? s[0] - live.beepAt : s[s.length - 1] - s[s.length - 2]), "Shots " + s.length);
+  live = null;
+  releaseWake();
+  state.mode = "processing";
+  $("#btnStart").textContent = "Working…"; $("#btnStart").disabled = true; $("#btnStart").classList.remove("stop");
+  $("#recDot").hidden = true;
+  try { rec.stop(); } catch(e){ resetLive(); }
+}
+function resetLive(){
+  state.mode = "idle";
+  $("#btnStart").textContent = "Start"; $("#btnStart").disabled = false; $("#btnStart").classList.remove("stop");
+  $("#fileLbl").hidden = false; $("#recDot").hidden = true;
+}
+function onRecStop(){
+  const type = (rec && rec.mimeType) || "video/webm";
+  const blob = new Blob(chunks, { type });
+  chunks = [];
+  loadRun(blob, type.includes("mp4") ? "mp4" : "webm");
+}
+$("#btnStart").onclick = () => { if (state.mode === "idle") startRun(); else if (state.mode === "live") stopRun(); };
+
+/* ---------- load a clip ---------- */
+$("#fileIn").onchange = e => {
+  const f = e.target.files && e.target.files[0]; e.target.value = "";
+  if (!f) return;
+  const ext = /webm/i.test(f.type || f.name) ? "webm" : "mp4";
+  state.mode = "processing";
+  $("#btnStart").disabled = true;
+  loadRun(f, ext);
+};
+
+/* ---------- review ---------- */
+let run = null;
+const pv = $("#pv"), pov = $("#pov");
+async function fixDuration(v){
+  if (isFinite(v.duration)) return;
+  await new Promise(res => {
+    const done = () => { v.removeEventListener("durationchange", on); v.currentTime = 0; res(); };
+    const on = () => { if (isFinite(v.duration)) done(); };
+    v.addEventListener("durationchange", on);
+    v.currentTime = 1e7;
+    setTimeout(done, 3000);
+  });
+}
+function waitMeta(v){ return v.readyState >= 1 ? Promise.resolve() : new Promise((res, rej) => { v.onloadedmetadata = () => res(); v.onerror = () => rej(new Error("video")); }); }
+
+async function loadRun(blob, ext){
+  showMsg($("#liveMsg"), "Finding the start beep and your shots…");
+  try {
+    const buf = await blob.arrayBuffer();
+    const audio = await audioCtx().decodeAudioData(buf);
+    const sr = audio.sampleRate, len = audio.length, pcm = new Float32Array(len);
+    for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
+    if (run && run.url) URL.revokeObjectURL(run.url);
+    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [] };
+    pv.src = run.url;
+    await waitMeta(pv); await fixDuration(pv);
+    const w = pv.videoWidth || 1280, h = pv.videoHeight || 720;
+    $("#player").style.aspectRatio = w + " / " + h;
+    const scale = Math.min(1, 1280 / Math.max(w, h));
+    pov.width = Math.round(w * scale); pov.height = Math.round(h * scale);
+    redetect();
+    showMsg($("#liveMsg"), "");
+    $("#live").style.display = "none"; $("#review").hidden = false; $("#review").style.display = "flex";
+    if (!run.beep) showMsg($("#revMsg"), "Couldn't hear a start beep in this clip. Play to the moment of the beep, pause, and tap Set beep at playhead.", true);
+    else showMsg($("#revMsg"), "");
+    pv.currentTime = run.beep ? Math.max(0, run.beep.t - 1) : 0;
+    window.scrollTo({ top: 0 });
+  } catch(e){
+    showMsg($("#liveMsg"), "Couldn't read the sound in that video. Try a clip recorded with your phone's camera app or with Start here.", true);
+    resetLive(); $("#btnStart").disabled = false;
+    return;
+  }
+  resetLive();
+}
+
+function redetect(){
+  if (!run) return;
+  run.shots = run.beep ? detectShots(run.pcm, run.sr, run.beep.t + run.beep.dur + 0.02, settings.thrDb) : [];
+  render();
+}
+function splitsOf(shots, b){ return shots.map((t, i) => i === 0 ? t - b : t - shots[i - 1]); }
+function render(){
+  const b = run.beep ? run.beep.t : null, s = run.shots;
+  $("#beepAt").textContent = b == null ? "not set" : b.toFixed(3) + " s into clip";
+  const list = $("#shotList"); list.textContent = "";
+  const head = document.createElement("li"); head.className = "head";
+  head.innerHTML = "<span>#</span><span>Time</span><span>Split</span><span></span>"; list.appendChild(head);
+  if (b == null || !s.length){
+    $("#stTotal").textContent = $("#stDraw").textContent = $("#stBest").textContent = $("#stAvg").textContent = "–";
+    const li = document.createElement("li"); const span = document.createElement("span"); span.className = "empty";
+    span.textContent = b == null ? "Set the start beep to find shots." : "No shots found. Raise the sensitivity, or add shots at the playhead.";
+    li.style.display = "block"; li.appendChild(span); list.appendChild(li);
+    drawPreview(); return;
+  }
+  const sp = splitsOf(s, b), rest = sp.slice(1);
+  const best = rest.length ? Math.min(...rest) : null;
+  $("#stTotal").textContent = fmt(s[s.length - 1] - b);
+  $("#stDraw").textContent = fmt(sp[0]);
+  $("#stBest").textContent = fmt(best);
+  $("#stAvg").textContent = rest.length ? fmt(rest.reduce((a, c) => a + c, 0) / rest.length) : "–";
+  s.forEach((t, i) => {
+    const li = document.createElement("li");
+    const n = document.createElement("span"); n.className = "n"; n.textContent = String(i + 1).padStart(2, "0");
+    const tm = document.createElement("button"); tm.className = "seek"; tm.textContent = fmt(t - b);
+    tm.setAttribute("aria-label", "Jump to shot " + (i + 1)); tm.onclick = () => { pv.currentTime = Math.max(0, t - 0.6); pv.play().catch(() => {}); };
+    const spl = document.createElement("span"); spl.textContent = (i === 0 ? "draw " : "") + fmt(sp[i]);
+    if (i > 0 && sp[i] === best) spl.className = "best";
+    const del = document.createElement("button"); del.className = "small del"; del.textContent = "×";
+    del.setAttribute("aria-label", "Remove shot " + (i + 1));
+    del.onclick = () => { run.shots.splice(i, 1); render(); };
+    li.append(n, tm, spl, del); list.appendChild(li);
+  });
+  drawPreview();
+}
+$("#btnAdd").onclick = () => {
+  if (!run) return;
+  const t = pv.currentTime;
+  if (!run.beep || t <= run.beep.t){ toast("Shots have to come after the start beep."); return; }
+  run.shots.push(t); run.shots.sort((a, c) => a - c); render(); toast("Shot added at " + fmt(t - run.beep.t));
+};
+$("#btnBeepHere").onclick = () => {
+  if (!run) return;
+  run.beep = { t: pv.currentTime, dur: 0.15, auto: false };
+  showMsg($("#revMsg"), ""); redetect(); toast("Beep set. Shots re-scanned.");
+};
+$("#beepMinus").onclick = () => { if (run && run.beep){ run.beep.t = Math.max(0, run.beep.t - 0.01); render(); } };
+$("#beepPlus").onclick = () => { if (run && run.beep){ run.beep.t += 0.01; render(); } };
+$("#btnNew").onclick = () => {
+  if (editLayout) setEditLayout(false);
+  pv.pause(); $("#review").hidden = true; $("#review").style.display = "none"; $("#live").style.display = "flex";
+  setFace("Ready", "0.00", "Split", "–", "Shots 0"); resetLive(); showMsg($("#revMsg"), "");
+};
+
+/* ---------- overlay drawing ---------- */
+function overlayState(t){
+  if (!run || !run.beep) return null;
+  const b = run.beep.t, s = run.shots;
+  let n = 0; while (n < s.length && s[n] <= t) n++;
+  const last = s.length ? s[s.length - 1] : null;
+  const elapsed = t < b ? 0 : (last != null && t >= last ? last - b : t - b);
+  const split = n === 0 ? null : (n === 1 ? s[0] - b : s[n - 1] - s[n - 2]);
+  return { elapsed, n, split, armed: t >= b, final: last != null && t >= last, sinceShot: n ? t - s[n - 1] : 99 };
+}
+function rr(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
+/* Layout: each plate has a center point stored as a fraction of the frame (0..1). */
+const PRESETS = {
+  bottom: { time: { x: 0.25, y: 0.86 }, split: { x: 0.83, y: 0.86 } },
+  top:    { time: { x: 0.25, y: 0.14 }, split: { x: 0.83, y: 0.14 } },
+  left:   { time: { x: 0, y: 0.62 }, split: { x: 0, y: 0.9 } },
+  right:  { time: { x: 1, y: 0.62 }, split: { x: 1, y: 0.9 } }
+};
+const savedLayout = store.get("layout", null);
+const layout = {
+  time: Object.assign({}, PRESETS.bottom.time, savedLayout && savedLayout.time),
+  split: Object.assign({}, PRESETS.bottom.split, savedLayout && savedLayout.split),
+  scale: savedLayout && savedLayout.scale ? savedLayout.scale : 1
+};
+const saveLayout = () => store.set("layout", layout);
+let editLayout = false, plateRects = {};
+const LABEL_FONT = px => "600 " + px.toFixed(1) + "px 'Barlow Condensed', 'Arial Narrow', sans-serif";
+const DIGIT_FONT = px => px.toFixed(1) + "px 'Share Tech Mono', ui-monospace, monospace";
+function track(g, px){ if ("letterSpacing" in g) g.letterSpacing = px; }
+function plateBox(W, H, u, pos, pw, ph){
+  const m = u * 2;
+  const x = Math.min(Math.max(m, pos.x * W - pw / 2), Math.max(m, W - pw - m));
+  const y = Math.min(Math.max(m, pos.y * H - ph / 2), Math.max(m, H - ph - m));
+  return { x, y, w: pw, h: ph };
+}
+function plateBg(g, r, u, flash){
+  rr(g, r.x, r.y, r.w, r.h, u * 1.8);
+  g.fillStyle = "rgba(8,9,11,0.74)"; g.fill();
+  g.lineWidth = Math.max(1, u * 0.35);
+  g.setLineDash([]);
+  g.strokeStyle = flash ? "rgba(255,255,255,0.95)" : "rgba(196,201,207,0.38)"; g.stroke();
+  if (editLayout){
+    g.setLineDash([u * 1.4, u * 1]); g.lineWidth = Math.max(1.5, u * 0.45);
+    g.strokeStyle = "rgba(255,255,255,0.9)";
+    rr(g, r.x - u * 0.8, r.y - u * 0.8, r.w + u * 1.6, r.h + u * 1.6, u * 2.4); g.stroke();
+    g.setLineDash([]);
+  }
+}
+function drawOverlay(g, W, H, t){
+  let st = overlayState(t);
+  if (!st){
+    if (!editLayout) return;
+    st = { elapsed: 0, n: 0, split: null, armed: false, final: false, sinceShot: 99 };
+  }
+  const u = Math.min(W, H) / 100 * layout.scale, ph = u * 19, flash = st.sinceShot < 0.15;
+  g.save();
+  g.textBaseline = "alphabetic";
+
+  /* total time plate */
+  const tTxt = fmt(st.elapsed);
+  g.font = DIGIT_FONT(u * 12); track(g, "0px");
+  const r1 = plateBox(W, H, u, layout.time, Math.max(u * 30, g.measureText(tTxt).width + u * 7), ph);
+  plateBg(g, r1, u, flash);
+  g.textAlign = "left";
+  g.font = LABEL_FONT(u * 2.8); track(g, (u * 0.35).toFixed(1) + "px");
+  g.fillStyle = "#8b919a";
+  g.fillText(st.armed ? (st.final ? "FINAL" : "TIME") : "STANDBY", r1.x + u * 3.4, r1.y + u * 4.6);
+  const grad = g.createLinearGradient(0, r1.y + u * 5, 0, r1.y + ph - u * 2);
+  grad.addColorStop(0, "#f5f6f8"); grad.addColorStop(0.48, "#c4c9cf"); grad.addColorStop(0.52, "#8e949c"); grad.addColorStop(1, "#e3e6ea");
+  g.font = DIGIT_FONT(u * 12); track(g, "0px");
+  g.fillStyle = grad; g.fillText(tTxt, r1.x + u * 3, r1.y + ph - u * 3);
+
+  /* split plate */
+  const sTxt = st.split == null ? "–" : fmt(st.split);
+  g.font = DIGIT_FONT(u * 7);
+  const r2 = plateBox(W, H, u, layout.split, Math.max(u * 22, g.measureText(sTxt).width + u * 7), ph);
+  plateBg(g, r2, u, flash);
+  const rx = r2.x + r2.w - u * 3.4;
+  g.textAlign = "right";
+  g.font = LABEL_FONT(u * 2.8); track(g, (u * 0.35).toFixed(1) + "px");
+  g.fillStyle = "#8b919a";
+  g.fillText(st.n === 1 ? "DRAW" : "SPLIT", rx, r2.y + u * 4.6);
+  g.fillText("SHOT " + st.n, rx, r2.y + ph - u * 2.6);
+  g.font = DIGIT_FONT(u * 7); track(g, "0px");
+  g.fillStyle = "#e8eaed"; g.fillText(sTxt, rx, r2.y + ph * 0.66);
+
+  plateRects = { time: r1, split: r2 };
+  g.restore();
+}
+
+/* ---------- moving the overlays ---------- */
+function toCanvas(e){
+  const r = pov.getBoundingClientRect();
+  return { x: (e.clientX - r.left) / r.width * pov.width, y: (e.clientY - r.top) / r.height * pov.height };
+}
+let drag = null;
+pov.addEventListener("pointerdown", e => {
+  if (!editLayout) return;
+  const p = toCanvas(e);
+  for (const k of ["split", "time"]){
+    const r = plateRects[k];
+    if (r && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h){
+      drag = { k, dx: p.x - (r.x + r.w / 2), dy: p.y - (r.y + r.h / 2) };
+      try { pov.setPointerCapture(e.pointerId); } catch(err){}
+      e.preventDefault(); return;
+    }
+  }
+});
+pov.addEventListener("pointermove", e => {
+  if (!drag) return;
+  const p = toCanvas(e);
+  layout[drag.k].x = Math.min(1, Math.max(0, (p.x - drag.dx) / pov.width));
+  layout[drag.k].y = Math.min(1, Math.max(0, (p.y - drag.dy) / pov.height));
+  drawPreview();
+});
+const endDrag = () => { if (drag){ drag = null; saveLayout(); } };
+pov.addEventListener("pointerup", endDrag);
+pov.addEventListener("pointercancel", endDrag);
+function setEditLayout(on){
+  editLayout = on;
+  pov.classList.toggle("editing", on); $("#player").classList.toggle("editing", on);
+  pv.controls = !on; if (on) pv.pause();
+  const b = $("#btnLayout"); b.textContent = on ? "Done" : "Move overlays"; b.setAttribute("aria-pressed", String(on));
+  $("#layoutHint").textContent = on
+    ? "Drag the timer and the split box. Tap Done when they're where you want them."
+    : "Tap Move overlays, then drag the timer and the split box anywhere on the video. Your layout is remembered and used for every saved video.";
+  drawPreview();
+}
+$("#btnLayout").onclick = () => setEditLayout(!editLayout);
+document.querySelectorAll("[data-preset]").forEach(btn => {
+  btn.onclick = () => {
+    const p = PRESETS[btn.dataset.preset];
+    layout.time = Object.assign({}, p.time); layout.split = Object.assign({}, p.split);
+    saveLayout(); drawPreview();
+  };
+});
+$("#ovScale").value = Math.round(layout.scale * 100);
+$("#ovScale").oninput = e => { layout.scale = Number(e.target.value) / 100; drawPreview(); };
+$("#ovScale").onchange = saveLayout;
+function drawPreview(){
+  const g = pov.getContext("2d"); g.clearRect(0, 0, pov.width, pov.height);
+  drawOverlay(g, pov.width, pov.height, pv.currentTime);
+}
+let pvLoop = 0;
+function previewLoop(){ drawPreview(); if (!pv.paused && !pv.ended) pvLoop = requestAnimationFrame(previewLoop); }
+pv.addEventListener("play", () => { cancelAnimationFrame(pvLoop); previewLoop(); });
+pv.addEventListener("seeked", drawPreview);
+pv.addEventListener("timeupdate", () => { if (pv.paused) drawPreview(); });
+
+/* ---------- export ---------- */
+let exporting = false;
+async function exportVideo(){
+  if (!run || exporting) return;
+  if (!window.MediaRecorder){ toast("This browser can't save video. Use Chrome."); return; }
+  if (editLayout) setEditLayout(false);
+  exporting = true; $("#btnSave").disabled = true; $("#btnNew").disabled = true;
+  const prog = $("#prog"); prog.hidden = false; $("#progBar").style.width = "0%"; $("#progTxt").textContent = "0%";
+  pv.pause();
+  try { await document.fonts.load("40px 'Share Tech Mono'"); await document.fonts.load("600 20px 'Barlow Condensed'"); } catch(e){}
+  const v = document.createElement("video");
+  v.src = run.url; v.playsInline = true; v.preload = "auto";
+  try {
+    await waitMeta(v); await fixDuration(v);
+    const vw = v.videoWidth || 1280, vh = v.videoHeight || 720, sc = Math.min(1, 1920 / Math.max(vw, vh));
+    const W = Math.round(vw * sc / 2) * 2, H = Math.round(vh * sc / 2) * 2;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H;
+    const g = cv.getContext("2d");
+    const dur = isFinite(v.duration) ? v.duration : run.pcm.length / run.sr;
+    const s = run.shots, b = run.beep ? run.beep.t : 0;
+    const start = run.beep ? Math.max(0, b - 1.5) : 0;
+    const end = s.length ? Math.min(dur, s[s.length - 1] + 2.5) : dur;
+
+    const c = audioCtx(); await c.resume();
+    const srcNode = c.createMediaElementSource(v), dest = c.createMediaStreamDestination();
+    srcNode.connect(dest);
+    const out = new MediaStream([...cv.captureStream(30).getVideoTracks(), ...dest.stream.getAudioTracks()]);
+    const mime = pickMime();
+    const mr = new MediaRecorder(out, mime ? { mimeType: mime, videoBitsPerSecond: 8e6 } : {});
+    const parts = []; mr.ondataavailable = e => { if (e.data && e.data.size) parts.push(e.data); };
+    const finished = new Promise(res => { mr.onstop = res; });
+
+    v.currentTime = start;
+    await new Promise(res => { v.onseeked = res; setTimeout(res, 2000); });
+    g.drawImage(v, 0, 0, W, H); drawOverlay(g, W, H, v.currentTime);
+    mr.start(1000);
+    let stopped = false;
+    const stop = () => { if (stopped) return; stopped = true; v.pause(); try { mr.stop(); } catch(e){} };
+    const frame = (now, meta) => {
+      if (stopped) return;
+      const t = meta && meta.mediaTime != null ? meta.mediaTime : v.currentTime;
+      g.drawImage(v, 0, 0, W, H); drawOverlay(g, W, H, t);
+      const p = Math.min(100, Math.max(0, (t - start) / Math.max(0.1, end - start) * 100));
+      $("#progBar").style.width = p.toFixed(1) + "%"; $("#progTxt").textContent = Math.round(p) + "%";
+      if (t >= end) { stop(); return; }
+      schedule();
+    };
+    const schedule = () => v.requestVideoFrameCallback ? v.requestVideoFrameCallback(frame) : requestAnimationFrame(() => frame(0, null));
+    v.onended = stop;
+    schedule();
+    await v.play();
+    await finished;
+    srcNode.disconnect();
+    const type = mr.mimeType || mime || "video/webm";
+    const ext = type.includes("mp4") ? "mp4" : "webm";
+    const blob = new Blob(parts, { type });
+    const d = new Date(), pad = n => String(n).padStart(2, "0");
+    const name = "shot-run-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes()) + "." + ext;
+    $("#progTxt").textContent = "100%"; $("#progBar").style.width = "100%";
+    await saveBlob(blob, name);
+  } catch(e){
+    toast("Saving failed: " + (e && e.message || "unknown error"));
+  } finally {
+    exporting = false; $("#btnSave").disabled = false; $("#btnNew").disabled = false;
+    setTimeout(() => { prog.hidden = true; }, 1500);
+  }
+}
+async function saveBlob(blob, name){
+  if (dlCap){
+    try { await dlCap.save({ filename: name, data: blob }); toast("Video saved"); }
+    catch(e){ toast(e && e.code === "declined" ? "Save cancelled" : "Couldn't save the video here (" + (e && (e.message || e.code)) + ")"); }
+    return;
+  }
+  const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = name;
+  document.body.appendChild(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(a.href), 60000);
+  toast("Saved to Downloads as " + name);
+}
+$("#btnSave").onclick = exportVideo;
+})();
+</script>
