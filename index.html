@@ -6,7 +6,9 @@
 <meta name="theme-color" content="#0a0b0d">
 <meta name="mobile-web-app-capable" content="yes">
 <style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}*{box-sizing:border-box}</style>
-<title>Shot Timer Cam</title>
+<title>Shot Dynamics</title>
+<meta name="application-name" content="Shot Dynamics">
+<meta name="apple-mobile-web-app-title" content="Shot Dynamics">
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -209,7 +211,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 
 <div class="app">
   <header>
-    <div class="brand">Shot Timer Cam<small>Video · Splits · Overlay</small></div>
+    <div class="brand">Shot Dynamics<small>Timer · Splits · Draws</small></div>
     <div class="hdr-btns">
       <button id="btnMenu" class="small locked" inert hidden>Menu</button>
       <button id="btnSettings" class="small locked" inert aria-expanded="false" aria-controls="settings">Settings</button>
@@ -1565,7 +1567,7 @@ async function exportVideo(){
     const ext = type.includes("mp4") ? "mp4" : "webm";
     const blob = new Blob(parts, { type });
     const d = new Date(), pad = n => String(n).padStart(2, "0");
-    const name = "shot-run-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes()) + "." + ext;
+    const name = "shot-dynamics-" + d.getFullYear() + pad(d.getMonth() + 1) + pad(d.getDate()) + "-" + pad(d.getHours()) + pad(d.getMinutes()) + "." + ext;
     $("#progTxt").textContent = "100%"; $("#progBar").style.width = "100%";
     await saveBlob(blob, name);
   } catch(e){
