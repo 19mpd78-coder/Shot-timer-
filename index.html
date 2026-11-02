@@ -1,3 +1,11 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0a0b0d">
+<meta name="mobile-web-app-capable" content="yes">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}img{max-width:100%}*{box-sizing:border-box}</style>
 <title>Shot Timer Cam</title>
 <meta name="claude:viewport-fit-sides" content="cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -21,6 +29,7 @@
   --f-digits:"Share Tech Mono",ui-monospace,"SF Mono",Menlo,Consolas,monospace;
   color-scheme:dark;
 }
+[hidden]{display:none!important}
 html,body{background:var(--bg);color:var(--silver)}
 body{
   font-family:var(--f-body);font-size:15px;line-height:1.45;
@@ -131,6 +140,9 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
   color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
 @media (prefers-reduced-motion:reduce){.rec::before{animation:none}}
 </style>
+</head>
+<body>
+
 
 <div class="app">
   <header>
@@ -571,6 +583,9 @@ async function loadRun(blob, ext){
     for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
     if (run && run.url) URL.revokeObjectURL(run.url);
     run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [] };
+    const noBeep = !run.beep;
+    /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
+    if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
     pv.src = run.url;
     await waitMeta(pv); await fixDuration(pv);
     const w = pv.videoWidth || 1280, h = pv.videoHeight || 720;
@@ -580,7 +595,7 @@ async function loadRun(blob, ext){
     redetect();
     showMsg($("#liveMsg"), "");
     $("#live").style.display = "none"; $("#review").hidden = false; $("#review").style.display = "flex";
-    if (!run.beep) showMsg($("#revMsg"), "Couldn't hear a start beep in this clip. Play to the moment of the beep, pause, and tap Set beep at playhead.", true);
+    if (noBeep) showMsg($("#revMsg"), "No start beep in this clip, so the clock starts at the beginning of the video. To start it somewhere else, pause the video there and tap Set beep at playhead.");
     else showMsg($("#revMsg"), "");
     pv.currentTime = run.beep ? Math.max(0, run.beep.t - 1) : 0;
     window.scrollTo({ top: 0 });
@@ -880,3 +895,6 @@ async function saveBlob(blob, name){
 $("#btnSave").onclick = exportVideo;
 })();
 </script>
+
+</body>
+</html>
