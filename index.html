@@ -200,6 +200,46 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .shots .seek.late{color:#ffb4b6}
 .sub{margin:6px 0 0;padding-top:12px;border-top:1px solid var(--line);font-family:var(--f-display);font-weight:600;letter-spacing:.18em;text-transform:uppercase;font-size:.8rem;color:var(--silver)}
 #settings > h2 + .sub{border-top:0;padding-top:0;margin-top:0}
+.match-strip{border:1px solid var(--silver);border-radius:14px;background:var(--brushed);padding:12px 14px;display:flex;flex-direction:column;gap:4px}
+.ms-top{display:flex;align-items:center;justify-content:space-between;gap:10px}
+.ms-name{font-family:var(--f-display);font-weight:700;font-size:1.8rem;letter-spacing:.06em;text-transform:uppercase;line-height:1.05;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;overflow-wrap:anywhere}
+.ms-safe{margin:4px 0 0;font-size:.88rem;color:var(--white);font-weight:600}
+.score-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.score-grid > div{display:flex;flex-direction:column;gap:6px;min-width:0}
+.sp-v{font-family:var(--f-digits);font-variant-numeric:tabular-nums;font-size:1.3rem;color:var(--white)}
+.sp-total .digits{font-size:2.4rem}
+.h2h-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:16px;display:flex;flex-direction:column;gap:12px}
+.h2h-card h2{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:.16em;text-transform:uppercase;font-size:.95rem;color:var(--white)}
+.team-box{border:1px solid var(--line);border-radius:12px;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg)}
+.name-row{display:grid;grid-template-columns:1fr 44px;gap:8px;align-items:center}
+.name-row.solo{grid-template-columns:1fr}
+.txt{width:100%;min-width:0;padding:10px 12px;border-radius:8px;border:1px solid var(--line);background:var(--panel-2);color:var(--white);font:inherit}
+.txt.team{font-family:var(--f-display);font-weight:700;letter-spacing:.08em;text-transform:uppercase}
+.set-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.rules{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:4px;color:var(--white)}
+.upnext{border:1px solid var(--silver);border-radius:14px;background:var(--brushed);padding:16px;display:flex;flex-direction:column;gap:8px}
+.upnext .big{font-family:var(--f-display);font-weight:700;font-size:2.2rem;letter-spacing:.06em;text-transform:uppercase;line-height:1.05;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;overflow-wrap:anywhere}
+.board{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:var(--panel)}
+.board li{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto;gap:10px;align-items:center;padding:10px 14px;border-top:1px solid var(--line)}
+.board li:first-child{border-top:0}
+.board .pos{font-family:var(--f-display);font-weight:700;font-size:1.2rem;color:var(--steel)}
+.board li.lead .pos{color:var(--white)}
+.board .who{display:flex;flex-direction:column;min-width:0}
+.board .who b{color:var(--white);font-weight:600;overflow-wrap:anywhere}
+.board .who span{font-size:.84rem;color:var(--steel)}
+.board .val{font-family:var(--f-digits);font-variant-numeric:tabular-nums;font-size:1.25rem;color:var(--white);text-align:right}
+.board .val small{display:block;font-size:.72rem;color:var(--steel)}
+.log{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:1px;background:var(--line);border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.log li{background:var(--panel);padding:8px 14px;display:grid;grid-template-columns:auto minmax(0,1fr) auto;gap:10px;align-items:baseline;font-size:.9rem}
+.log .r{font-family:var(--f-display);font-weight:600;letter-spacing:.12em;color:var(--steel);font-size:.75rem}
+.log .d{font-family:var(--f-digits);color:var(--silver);font-size:.82rem}
+.log .s{font-family:var(--f-digits);color:var(--white)}
+.winner{border:1px solid var(--silver);border-radius:14px;padding:18px;background:var(--brushed);text-align:center;display:flex;flex-direction:column;gap:6px}
+.winner .big{font-family:var(--f-display);font-weight:700;font-size:2rem;letter-spacing:.08em;text-transform:uppercase;
+  background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;overflow-wrap:anywhere}
+.danger.arm{border-color:var(--hot);color:#ffd9da}
 .unlock-hint{font-family:var(--f-display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--steel)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--steel);
   color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
@@ -271,7 +311,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <input type="range" id="ovScale" min="60" max="160" step="5">
     </div>
 
-    <h3 class="sub">Compare draws</h3>
+    <h3 class="sub">Dynamic Film Room</h3>
     <div class="field">
       <span class="lbl">View</span>
       <div class="seg" role="group" aria-label="Compare view">
@@ -290,20 +330,31 @@ button,label.file{-webkit-tap-highlight-color:transparent}
   <section id="menu" class="menu" aria-label="Main menu">
     <button class="tile" id="goLive">
       <span class="tile-t">Live timer</span>
-      <span class="tile-d">Record a string. The app waits a random delay, beeps, and times every shot. Each string is saved on this phone for Compare draws.</span>
+      <span class="tile-d">Record a string. The app waits a random delay, beeps, and times every shot. Each string is saved on this phone for the Dynamic Film Room.</span>
     </button>
     <button class="tile" id="goLoad">
-      <span class="tile-t">Load a video</span>
+      <span class="tile-t">Upload video</span>
       <span class="tile-d">Add the time and splits to a clip you already have, like old range videos with friends.</span>
     </button>
     <button class="tile" id="goCompare">
-      <span class="tile-t">Compare draws</span>
-      <span class="tile-d">Play two of your live strings together from the beep, side by side or as a ghost, to see where the faster draw pulls ahead.</span>
+      <span class="tile-t">Dynamic Film Room</span>
+      <span class="tile-d">For learning only. Sit down and study your strings: watch two together from the beep, side by side or as a ghost, and see where the faster draw pulls ahead.</span>
       <span class="tile-m" id="runCount">No saved strings yet</span>
+    </button>
+    <button class="tile" id="goH2H">
+      <span class="tile-t">Team Training</span>
+      <span class="tile-d">Competitive, head to head. Set up teams or take turns as shooters on the same string. A phone runner keeps score, and the leaderboard shows who's fastest.</span>
+      <span class="tile-m" id="h2hStatus">No event running</span>
     </button>
   </section>
 
   <section id="live" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div class="match-strip" id="matchStrip" hidden>
+      <div class="ms-top"><span class="lbl" id="msRound">Head to Head</span><button class="small" id="msBoard">Standings</button></div>
+      <div class="ms-name" id="msName">Shooter</div>
+      <div class="hint" id="msTeam"></div>
+      <p class="ms-safe" id="msSafe">The phone runner starts each string. Shooter, hands off the phone.</p>
+    </div>
     <div class="viewport" id="viewport">
       <video id="cam" playsinline muted></video>
       <div class="placeholder" id="camPh">
@@ -344,7 +395,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 
     <div class="controls">
       <button id="btnStart" class="go">Start</button>
-      <label class="ghost file" id="fileLbl">Load a video<input type="file" id="fileIn" accept="video/*"></label>
+      <label class="ghost file" id="fileLbl">Upload video<input type="file" id="fileIn" accept="video/*"></label>
     </div>
     <p class="hint">Start turns on recording, waits a random delay, then beeps. Shoot on the beep. Times on screen are a live preview; the saved video uses the exact times from the recording.</p>
   </section>
@@ -403,7 +454,29 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <p class="hint">Missing shots: slide right. Echoes or other bays counted: slide left. You can also remove or add single shots above.</p>
     </div>
 
-    <div class="controls">
+    <div class="panel score-panel" id="scorePanel" hidden>
+      <h2 id="spTitle">Score</h2>
+      <div class="score-grid">
+        <div><span class="lbl">Time</span><span class="sp-v" id="spTime">–</span></div>
+        <div><span class="lbl" id="spLateLbl">Late shots</span><span class="sp-v" id="spLate">0</span></div>
+        <div class="sp-miss">
+          <span class="lbl" id="spMissLbl">Misses</span>
+          <div class="stepper" role="group" aria-labelledby="spMissLbl">
+            <button class="small" id="spMissDn" aria-label="One fewer miss">−</button>
+            <output class="step-val" id="spMiss">0</output>
+            <button class="small" id="spMissUp" aria-label="One more miss">+</button>
+          </div>
+        </div>
+        <div class="sp-total"><span class="lbl">Score</span><span class="digits" id="spScore">–</span></div>
+      </div>
+      <p class="hint" id="spHint">Count misses on the targets yourself. Fix any missed or extra shots in the list above before saving.</p>
+      <div class="controls">
+        <button id="spSave" class="go">Save score</button>
+        <button id="spReshoot" class="ghost">Reshoot</button>
+      </div>
+    </div>
+
+    <div class="controls" id="reviewCtrls">
       <button id="btnSave" class="go">Save video</button>
       <button id="btnNew" class="ghost">New run</button>
     </div>
@@ -413,7 +486,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 
   <section id="compare" hidden style="display:flex;flex-direction:column;gap:14px">
     <div class="tools">
-      <h2 class="cmp-h grow">Compare draws</h2>
+      <h2 class="cmp-h grow">Dynamic Film Room</h2>
       <button id="cmpView" class="small">Side by side</button>
     </div>
 
@@ -467,6 +540,11 @@ button,label.file{-webkit-tap-highlight-color:transparent}
     <p class="hint">Only strings recorded with Live timer are saved here, and only on this phone. The newest 30 are kept.</p>
   </section>
 
+  <section id="h2h" hidden style="display:flex;flex-direction:column;gap:14px">
+    <div id="h2hSetup" style="display:flex;flex-direction:column;gap:14px"></div>
+    <div id="h2hBoard" hidden style="display:flex;flex-direction:column;gap:14px"></div>
+  </section>
+
   <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Splits are to 1/100 s.</p>
   </main>
 </div>
@@ -486,7 +564,7 @@ const saveSettings = () => store.set("settings", settings);
 const thrLin = () => Math.pow(10, settings.thrDb / 20);
 
 /* ---------- safety banner ---------- */
-/* Shown when the app opens and again before Compare draws.
+/* Shown when the app opens and again before the Dynamic Film Room.
    Everything stays locked (inert) until the shooter taps Got it. */
 let afterSafety = null;
 function lockApp(on){
@@ -543,26 +621,29 @@ let view = "menu";
 function showView(name){
   if (name !== "compare" && typeof cmpPause === "function") cmpPause();
   if (name !== "review" && typeof pv !== "undefined" && pv) pv.pause();
-  ["menu", "live", "review", "compare"].forEach(v => { $("#" + v).hidden = v !== name; });
+  ["menu", "live", "review", "compare", "h2h"].forEach(v => { $("#" + v).hidden = v !== name; });
   $("#btnMenu").hidden = name === "menu";
   view = name;
   if (name === "menu") refreshRunCount();
   window.scrollTo({ top: 0 });
 }
 async function refreshRunCount(){
+  $("#h2hStatus").textContent = h2hStatusText();
   let n = 0; try { n = await DB.count(); } catch(e){}
   $("#runCount").textContent = n === 0 ? "No saved strings yet" : n === 1 ? "1 saved string · record one more" : n + " saved strings";
+  $("#h2hStatus").textContent = h2hStatusText();
 }
 $("#btnMenu").onclick = () => {
   if (state.mode === "live"){ toast("Stop the recording first."); return; }
   if (state.mode === "processing") return;
   if (exporting){ toast("Wait for the video to finish saving."); return; }
+  h2hArmed = false; updateMatchStrip();
   showView("menu");
 };
-$("#goLive").onclick = () => showView("live");
+$("#goLive").onclick = () => { h2hArmed = false; updateMatchStrip(); showView("live"); };
 $("#goLoad").onclick = () => $("#fileIn").click();
 $("#goCompare").onclick = () => requireSafety(
-  "Before you compare: unload, show clear, and holster or bench the firearm. Only pick up the phone with empty hands.",
+  "Before you enter the film room: unload, show clear, and holster or bench the firearm. Only pick up the phone with empty hands.",
   () => openCompare()
 );
 
@@ -660,7 +741,7 @@ function stepBlock(s, p, t){
   s.hist[s.hi] = p; s.hi = (s.hi + 1) % 40; if (s.n < 40) s.n++;
   return shot;
 }
-function detectShots(pcm, sr, minT, thrDb){
+function detectShots(pcm, sr, minT, thrDb, skip){
   const thr = Math.pow(10, thrDb / 20), B = Math.max(1, Math.round(sr / 1000));
   const s = newDet(thr, minT), out = [], half = thr * 0.5;
   for (let o = 0; o + B <= pcm.length; o += B){
@@ -668,6 +749,8 @@ function detectShots(pcm, sr, minT, thrDb){
     for (let i = 0; i < B; i++){ const a = Math.abs(pcm[o + i]); if (a > p) p = a; }
     if (stepBlock(s, p, o / sr)){
       let k = o; while (k < o + B && Math.abs(pcm[k]) < half) k++;
+      /* a beep is not a shot, and must not block the detector for a shot right after it */
+      if (skip && skip(k / sr)){ s.lock = 0; continue; }
       out.push(k / sr);
     }
   }
@@ -698,6 +781,14 @@ function goertzel(x, start, W, f, sr){
   const k = 2 * Math.cos(2 * Math.PI * f / sr); let s1 = 0, s2 = 0;
   for (let i = 0; i < W; i++){ const v = x[start + i] || 0; const s = v + k * s1 - s2; s2 = s1; s1 = s; }
   return s1 * s1 + s2 * s2 - k * s1 * s2;
+}
+/* True when the 20 ms after t is mostly a pure tone at hz (a timer beep), not a broadband shot. */
+function isToneAt(pcm, sr, t, hz){
+  const W = Math.round(sr * 0.02), st = Math.max(0, Math.round(t * sr));
+  let e = 0; for (let i = 0; i < W; i++){ const v = pcm[st + i] || 0; e += v * v; }
+  if (e <= 0) return false;
+  const g = goertzel(pcm, st, W, hz, sr);
+  return g / (e * W / 2) > 0.5;
 }
 function detectBeep(pcm, sr){
   const N = 1024, hop = Math.round(sr * 0.01);
@@ -793,8 +884,9 @@ async function startRun(){
   const beepAt = c.currentTime + 0.6 + delay;
   const det = newDet(thrLin(), beepAt + BEEP_DUR + 0.02);
   const B = Math.max(1, Math.round(c.sampleRate / 1000));
-  const parAt = settings.par ? beepAt + settings.par : null;
-  live = { src, proc, mute, det, beepAt, parAt, par: settings.par, shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
+  const cfg = liveCfg();
+  const parAt = cfg.par ? beepAt + cfg.par : null;
+  live = { src, proc, mute, det, beepAt, parAt, par: cfg.par, cfg, turn: liveTurn(), shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
   playBeep(beepAt);
   if (parAt) playEndBeep(parAt);
 
@@ -806,7 +898,7 @@ async function startRun(){
       if (++live.acc === B){
         const t = live.t0 + (live.samples + i + 1 - B) / sr;
         if (stepBlock(live.det, live.peak, t) && !(live.parAt && t > live.parAt - 0.01 && t < live.parAt + END_LEN)
-            && !(settings.shots && live.shots.length >= settings.shots)){ live.shots.push(t); flashFace(); }
+            && !(live.cfg.shots && live.shots.length >= live.cfg.shots)){ live.shots.push(t); flashFace(); }
         live.acc = 0; live.peak = 0;
       }
     }
@@ -828,8 +920,8 @@ function tick(){
     const split = n === 0 ? "–" : fmt(n === 1 ? s[0] - live.beepAt : s[n - 1] - s[n - 2]);
     const over = live.parAt && t > live.parAt;
     setFace(over ? "Time's up" : n ? "Time" : "Go", fmt(t - live.beepAt), n === 1 ? "Draw" : "Split", split,
-      "Shots " + n + (settings.shots ? " of " + settings.shots : ""));
-    if (settings.shots && n >= settings.shots && t - s[n - 1] > 1.5){ stopRun(); return; }
+      "Shots " + n + (live.cfg.shots ? " of " + live.cfg.shots : ""));
+    if (live.cfg.shots && n >= live.cfg.shots && t - s[n - 1] > 1.5){ stopRun(); return; }
     if (live.parAt && t > live.parAt + 1.5 && (!n || t - s[n - 1] > 1.5)){ stopRun(); return; }
     if (settings.autoStop && n && t - s[n - 1] > settings.autoStopSec){ stopRun(); return; }
     if (!n && t - live.beepAt > 60){ stopRun(); return; }
@@ -844,6 +936,7 @@ function stopRun(){
   try { live.src.disconnect(); live.proc.disconnect(); live.mute.disconnect(); } catch(e){}
   const s = live.shots;
   lastParRec = live.par || 0;
+  lastTurn = live.turn || null;
   if (s.length) setFace("Time", fmt(s[s.length - 1] - live.beepAt), s.length === 1 ? "Draw" : "Split",
     fmt(s.length === 1 ? s[0] - live.beepAt : s[s.length - 1] - s[s.length - 2]), "Shots " + s.length);
   live = null;
@@ -853,11 +946,12 @@ function stopRun(){
   $("#recDot").hidden = true;
   try { rec.stop(); } catch(e){ resetLive(); }
 }
-let lastParRec = 0;
+let lastParRec = 0, lastTurn = null;
 function resetLive(){
   state.mode = "idle";
   $("#btnStart").textContent = "Start"; $("#btnStart").disabled = false; $("#btnStart").classList.remove("stop");
   $("#fileLbl").hidden = false; $("#recDot").hidden = true;
+  updateMatchStrip();
 }
 function onRecStop(){
   const type = (rec && rec.mimeType) || "video/webm";
@@ -901,7 +995,7 @@ async function loadRun(blob, ext, isLive){
     const sr = audio.sampleRate, len = audio.length, pcm = new Float32Array(len);
     for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
     if (run && run.url) URL.revokeObjectURL(run.url);
-    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now(), parRec: isLive ? lastParRec : 0 };
+    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now(), parRec: isLive ? lastParRec : 0, match: isLive ? lastTurn : null };
     const noBeep = !run.beep;
     /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
     if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
@@ -929,16 +1023,19 @@ async function loadRun(blob, ext, isLive){
 
 function redetect(){
   if (!run) return;
-  let shots = run.beep ? detectShots(run.pcm, run.sr, run.beep.t + run.beep.dur + 0.02, settings.thrDb) : [];
+  const pb = run.parRec && run.beep ? run.beep.t + run.parRec : null;
+  const isEnd = pb == null ? null : t => t > pb - 0.1 && t < pb + END_LEN + 0.15 && isToneAt(run.pcm, run.sr, t, END_HZ);
+  let shots = run.beep ? detectShots(run.pcm, run.sr, run.beep.t + run.beep.dur + 0.02, settings.thrDb, isEnd) : [];
   /* the app's own time-up beeps are not shots */
-  if (run.parRec && run.beep){ const pb = run.beep.t + run.parRec; shots = shots.filter(t => t < pb - 0.01 || t > pb + END_LEN); }
-  if (settings.shots) shots = shots.slice(0, settings.shots);
+
+  const rc = runCfg();
+  if (rc.shots) shots = shots.slice(0, rc.shots);
   run.shots = shots;
   render();
 }
 function splitsOf(shots, b){ return shots.map((t, i) => i === 0 ? t - b : t - shots[i - 1]); }
 function render(){
-  const b = run.beep ? run.beep.t : null, s = run.shots;
+  const b = run.beep ? run.beep.t : null, s = run.shots, rc = runCfg();
   $("#beepAt").textContent = b == null ? "not set" : b.toFixed(3) + " s into clip";
   const list = $("#shotList"); list.textContent = "";
   const head = document.createElement("li"); head.className = "head";
@@ -965,7 +1062,7 @@ function render(){
     tm.setAttribute("aria-label", "Jump to shot " + (i + 1)); tm.onclick = () => { pv.currentTime = Math.max(0, t - 0.6); pv.play().catch(() => {}); };
     const spl = document.createElement("span"); spl.textContent = (i === 0 ? "draw " : "") + fmt(sp[i]);
     if (i > 0 && sp[i] === best) spl.className = "best";
-    if (settings.par && t - b > settings.par + 0.005){ tm.classList.add("late"); tm.textContent += " late"; }
+    if (rc.par && t - b > rc.par + 0.005){ tm.classList.add("late"); tm.textContent += " late"; }
     const del = document.createElement("button"); del.className = "small del"; del.textContent = "×";
     del.setAttribute("aria-label", "Remove shot " + (i + 1));
     del.onclick = () => { run.shots.splice(i, 1); render(); };
@@ -980,9 +1077,9 @@ async function persistRun(first){
   if (!run || !run.live || !run.beep) return;
   const r = run;
   try {
-    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice() });
+    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : "" });
     if (first){
-      toast("String saved for Compare draws");
+      toast("String saved to the Dynamic Film Room");
       const all = await DB.all();
       if (all.length > MAX_RUNS){
         all.sort((a, b) => b.id - a.id);
@@ -994,17 +1091,18 @@ async function persistRun(first){
   }
 }
 function showParResult(s, b){
-  const el = $("#parResult"), bits = [];
-  if (settings.shots && b != null){
-    bits.push(s.length >= settings.shots ? "All " + settings.shots + " shots found." : "Found " + s.length + " of " + settings.shots + " shots. Raise the sensitivity or add the missing ones.");
+  const el = $("#parResult"), bits = [], rc = runCfg();
+  if (rc.shots && b != null){
+    bits.push(s.length >= rc.shots ? "All " + rc.shots + " shots found." : "Found " + s.length + " of " + rc.shots + " shots. Raise the sensitivity or add the missing ones.");
   }
-  if (settings.par && b != null && s.length){
-    const total = s[s.length - 1] - b, late = s.filter(t => t - b > settings.par + 0.005).length;
+  if (rc.par && b != null && s.length){
+    const total = s[s.length - 1] - b, late = s.filter(t => t - b > rc.par + 0.005).length;
     bits.push(late
-      ? "Over the " + settings.par.toFixed(1) + " s limit by " + fmt(total - settings.par) + ". " + late + (late === 1 ? " shot was" : " shots were") + " late."
-      : "Made the " + settings.par.toFixed(1) + " s limit with " + fmt(settings.par - total) + " to spare.");
+      ? "Over the " + rc.par.toFixed(1) + " s limit by " + fmt(total - rc.par) + ". " + late + (late === 1 ? " shot was" : " shots were") + " late."
+      : "Made the " + rc.par.toFixed(1) + " s limit with " + fmt(rc.par - total) + " to spare.");
   }
-  showMsg(el, bits.join(" "), settings.par && s.length && b != null && s[s.length - 1] - b > settings.par + 0.005);
+  showMsg(el, bits.join(" "), rc.par && s.length && b != null && s[s.length - 1] - b > rc.par + 0.005);
+  if (typeof updateScorePanel === "function") updateScorePanel();
 }
 $("#btnAdd").onclick = () => {
   if (!run) return;
@@ -1222,7 +1320,7 @@ function renderRunList(){
     const b = document.createElement("button"); b.className = "pick";
     const on = cmp.sel.includes(r.id); b.setAttribute("aria-pressed", String(on));
     const box = document.createElement("span"); box.className = "box"; box.textContent = on ? "✓" : "";
-    const when = document.createElement("span"); when.className = "when"; when.textContent = whenTxt(r.id);
+    const when = document.createElement("span"); when.className = "when"; when.textContent = (r.who ? r.who + " · " : "") + whenTxt(r.id);
     if (on && picked.length === 2){ const t = document.createElement("span"); t.className = "tag"; t.textContent = picked[0].id === r.id ? "FASTER" : "SLOWER"; when.appendChild(t); }
     const nums = document.createElement("span"); nums.className = "nums";
     nums.textContent = "Draw " + fmt(drawOf(r)) + " · " + r.shots.length + (r.shots.length === 1 ? " shot" : " shots") + " · " + fmt(endOf(r));
@@ -1426,7 +1524,7 @@ function drawCompare(){
     drawContain(cvB, 0, 0, W, H);
     g.globalAlpha = cmp.alpha; drawContain(cvA, 0, 0, W, H); g.globalAlpha = 1;
     const u = Math.min(W, H) / 100;
-    chip(g, u * 3, u * 3, u, "GHOST · FASTER " + fmt(dA), true);
+    chip(g, u * 3, u * 3, u, "GHOST · " + (cmp.a.who ? cmp.a.who.toUpperCase().slice(0, 16) : "FASTER") + " " + fmt(dA), true);
     const p1 = clockPlate(g, u * 3, H - u * 34, u, "GHOST " + A.label, A.value, A.flash, "");
     clockPlate(g, u * 3, H - u * 34 + p1.h + u * 2, u, "SLOWER " + B.label, B.value, B.flash, behind);
   } else {
@@ -1438,7 +1536,8 @@ function drawCompare(){
       g.save(); g.beginPath(); g.rect(x, y, w, h); g.clip();
       drawContain(v, x, y, w, h);
       const u = Math.min(w, h) / 100 * (cmp.split === "h" ? 1.7 : 1.1);
-      chip(g, x + u * 2.5, y + u * 2.5, u, tag, tag === "FASTER");
+      const who = (tag === "FASTER" ? cmp.a : cmp.b).who;
+      chip(g, x + u * 2.5, y + u * 2.5, u, who ? who.toUpperCase().slice(0, 14) + " · " + tag : tag, tag === "FASTER");
       clockPlate(g, x + u * 2.5, y + h - u * 18, u, st.label, st.value, st.flash, extra);
       g.restore();
     });
@@ -1453,7 +1552,7 @@ function renderLegend(){
   const dA = drawOf(cmp.a), dB = drawOf(cmp.b);
   [[cmp.a, "Faster", ""], [cmp.b, "Slower", "+" + fmt(dB - dA) + " on the draw"]].forEach(([r, name, delta]) => {
     const row = document.createElement("div");
-    const l = document.createElement("span"); l.className = "lbl"; l.textContent = name + " · " + whenTxt(r.id);
+    const l = document.createElement("span"); l.className = "lbl"; l.textContent = name + " · " + (r.who ? r.who + " · " : "") + whenTxt(r.id);
     const d = document.createElement("span"); d.className = "digits"; d.textContent = fmt(drawOf(r));
     row.append(l, d);
     if (delta){ const x = document.createElement("span"); x.className = "delta"; x.textContent = delta; row.appendChild(x); }
@@ -1509,6 +1608,293 @@ $("#cmpSync").onclick = () => {
   toast("Synced at " + signed(cmp.s) + " s from the beep");
 };
 for (const v of [cvA, cvB]) v.addEventListener("seeked", () => { if (!cmp.playing && view === "compare") drawCompare(); });
+
+/* ---------- team training: head to head ---------- */
+/* Teams (or a line of single shooters) take turns on the same string. A named phone runner
+   starts every string so the shooter never handles the phone. Score = time + penalties. */
+const PEN_STEPS = [0, 0.5, 1, 2, 3, 5, 10];
+const esc = v => String(v).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[c]);
+let match = store.get("h2h", null);
+let h2hArmed = false;
+const saveMatch = () => store.set("h2h", match);
+const draft = Object.assign({
+  format: "teams",
+  teams: [{ name: "Team 1", shooters: ["", ""] }, { name: "Team 2", shooters: ["", ""] }],
+  solo: ["", "", ""],
+  rounds: 3, shots: 6, par: 0, missPen: 2, latePen: 1, ro: ""
+}, store.get("h2hDraft", {}));
+const saveDraft = () => store.set("h2hDraft", draft);
+const H2H_SAFETY = ro => "Team Training: one shooter on the line at a time. " + ro + " runs the phone and starts every string; the shooter never touches it. Everyone else stays behind the line. Unload and show clear after every string.";
+
+function shooterList(m){ const out = []; m.teams.forEach(t => t.shooters.forEach(sh => out.push({ id: sh.id, name: sh.name, team: t.name }))); return out; }
+function findShooter(id){ return shooterList(match).find(x => x.id === id); }
+function turnOrder(m){
+  const order = [], max = Math.max(...m.teams.map(t => t.shooters.length));
+  for (let i = 0; i < max; i++) m.teams.forEach(t => { if (t.shooters[i]) order.push(t.shooters[i].id); });
+  return order;
+}
+function currentTurn(){
+  if (!match || match.status !== "live") return null;
+  const order = turnOrder(match);
+  for (let r = 1; r <= match.rounds; r++) for (const id of order){
+    if (!match.results.some(x => x.shooterId === id && x.round === r)){
+      const sh = findShooter(id);
+      return { matchId: match.id, shooterId: id, round: r, name: sh.name, team: sh.team, misses: 0 };
+    }
+  }
+  return null;
+}
+function liveTurn(){ return (h2hArmed && match && match.status === "live") ? currentTurn() : null; }
+function liveCfg(){ return (h2hArmed && match && match.status === "live") ? { shots: match.shots, par: match.par } : { shots: settings.shots, par: settings.par }; }
+function runCfg(){ return (run && run.match && match && run.match.matchId === match.id) ? { shots: match.shots, par: match.par } : { shots: settings.shots, par: settings.par }; }
+
+/* live screen banner */
+function updateMatchStrip(){
+  const t = liveTurn();
+  $("#matchStrip").hidden = !t;
+  $("#live .setup").hidden = !!t;
+  if (t) $("#fileLbl").hidden = true;
+  if (!t) return;
+  $("#msRound").textContent = "Team Training · Round " + t.round + " of " + match.rounds;
+  $("#msName").textContent = t.name;
+  $("#msTeam").textContent = match.format === "teams" ? t.team : "";
+  $("#msTeam").hidden = match.format !== "teams";
+  $("#msSafe").textContent = match.ro + " runs the phone and taps Start. Shooter, hands off the phone. Everyone else behind the line.";
+}
+$("#msBoard").onclick = () => { if (state.mode !== "idle") return; h2hArmed = false; updateMatchStrip(); showView("h2h"); renderH2H(); };
+
+/* scoring a string on the review screen */
+function scoreOf(time, late, misses){ return time + late * match.latePen + misses * match.missPen; }
+function runScoreParts(){
+  if (!run || !run.beep || !run.shots.length) return null;
+  const b = run.beep.t, s = run.shots;
+  const time = s[s.length - 1] - b, draw = s[0] - b;
+  const late = match.par ? s.filter(t => t - b > match.par + 0.005).length : 0;
+  const misses = run.match.misses || 0;
+  return { time, draw, late, misses, shots: s.length, score: scoreOf(time, late, misses) };
+}
+function updateScorePanel(){
+  const mine = !!(run && run.match && match && run.match.matchId === match.id);
+  const on = mine && match.status === "live" && !run.match.saved;
+  $("#scorePanel").hidden = !on;
+  $("#review .setup").hidden = mine;
+  $("#btnNew").hidden = mine;
+  if (!on) return;
+  $("#spTitle").textContent = "Score · " + run.match.name + " · Round " + run.match.round;
+  $("#spMiss").textContent = String(run.match.misses || 0);
+  $("#spMissLbl").textContent = "Misses" + (match.missPen ? " · +" + match.missPen + " s each" : "");
+  $("#spLateLbl").textContent = match.par ? "Late shots" + (match.latePen ? " · +" + match.latePen + " s each" : "") : "Late shots · no limit";
+  const p = runScoreParts();
+  $("#spSave").disabled = !p;
+  $("#spTime").textContent = p ? fmt(p.time) : "–";
+  $("#spLate").textContent = p ? String(p.late) : "–";
+  $("#spScore").textContent = p ? fmt(p.score) : "–";
+}
+$("#spMissDn").onclick = () => { if (run && run.match){ run.match.misses = Math.max(0, (run.match.misses || 0) - 1); updateScorePanel(); } };
+$("#spMissUp").onclick = () => { if (run && run.match){ run.match.misses = Math.min(99, (run.match.misses || 0) + 1); updateScorePanel(); } };
+$("#spSave").onclick = () => {
+  if (!run || !run.match || run.match.saved || !match || match.status !== "live") return;
+  const p = runScoreParts();
+  if (!p){ toast("No shots on this string. Add them, or tap Reshoot."); return; }
+  match.results.push(Object.assign({ shooterId: run.match.shooterId, round: run.match.round, runId: run.id, at: Date.now() }, p));
+  run.match.saved = true;
+  if (!currentTurn()){ match.status = "done"; match.doneAt = Date.now(); }
+  saveMatch();
+  h2hArmed = false; updateMatchStrip();
+  showView("h2h"); renderH2H();
+  const nx = currentTurn();
+  toast(nx ? "Score saved. Next up: " + nx.name : "Score saved. That was the last string!");
+};
+$("#spReshoot").onclick = async () => {
+  if (!run || !run.match || run.match.saved) return;
+  clearTimeout(persistT);
+  const id = run.id; run.live = false;
+  try { await DB.del(id); } catch(e){}
+  h2hArmed = true; updateMatchStrip();
+  setFace("Ready", "0.00", "Split", "–", "Shots 0");
+  showView("live");
+  toast("Reshoot: same shooter, same round. Unload and show clear first.");
+};
+
+/* standings: ranked by average score per string, so it stays fair mid-round and with uneven teams */
+function standings(){
+  const rows = shooterList(match).map(sh => {
+    const rs = match.results.filter(r => r.shooterId === sh.id), n = rs.length;
+    return { sh, n, avg: n ? rs.reduce((a, r) => a + r.score, 0) / n : Infinity,
+             best: n ? Math.min(...rs.map(r => r.score)) : null, draw: n ? Math.min(...rs.map(r => r.draw)) : null };
+  }).sort((a, b) => a.avg - b.avg || b.n - a.n);
+  const teams = match.teams.map(t => {
+    const rs = match.results.filter(r => t.shooters.some(s => s.id === r.shooterId)), n = rs.length;
+    return { t, n, avg: n ? rs.reduce((a, r) => a + r.score, 0) / n : Infinity };
+  }).sort((a, b) => a.avg - b.avg || b.n - a.n);
+  return { rows, teams };
+}
+const avgTxt = v => isFinite(v) ? fmt(v) : "–";
+function penaltyTxt(){
+  const bits = [];
+  bits.push(match.missPen ? "+" + match.missPen + " s per miss" : "no miss penalty");
+  if (match.par) bits.push((match.latePen ? "+" + match.latePen + " s per late shot" : "no late penalty") + " (limit " + match.par.toFixed(1) + " s)");
+  return bits.join(", ");
+}
+function renderH2H(){
+  const setupEl = $("#h2hSetup"), boardEl = $("#h2hBoard");
+  if (!match){ setupEl.hidden = false; boardEl.hidden = true; renderSetup(); return; }
+  setupEl.hidden = true; boardEl.hidden = false;
+  const t = currentTurn(), st = standings(), done = match.status === "done", teams = match.format === "teams";
+  let h = '<div class="tools"><h2 class="cmp-h grow">Team Training</h2><span class="hint">' +
+    (done ? "Final results" : "Round " + (t ? t.round : match.rounds) + " of " + match.rounds) + "</span></div>";
+  if (!done && t){
+    h += '<div class="upnext"><span class="lbl">Up next' + (teams ? " · " + esc(t.team) : "") + " · Round " + t.round + '</span><span class="big">' + esc(t.name) + "</span>" +
+      '<ul class="rules"><li>The last shooter has unloaded and shown clear.</li><li>' + esc(match.ro) + " runs the phone. The shooter doesn't touch it.</li><li>Everyone else stays behind the line.</li></ul>" +
+      '<button class="go" id="h2hGo">Go to the line</button></div>';
+  }
+  if (done && match.results.length){
+    const top = teams ? st.teams : st.rows, tie = top.length > 1 && Math.abs(top[0].avg - top[1].avg) < 0.005;
+    const winName = teams ? top[0].t.name : top[0].sh.name;
+    h += '<div class="winner"><span class="lbl">Final</span><span class="big">' + (tie ? "It's a tie" : esc(winName) + " wins") + "</span>" +
+      '<span class="hint">' + (teams ? "Fastest shooter: " + esc(st.rows[0].sh.name) + " · avg " + avgTxt(st.rows[0].avg) : "Average score " + avgTxt(top[0].avg)) + "</span></div>";
+  }
+  const row = (i, name, sub, val, lead) => '<li class="' + (lead ? "lead" : "") + '"><span class="pos">' + (i + 1) + '</span><span class="who"><b>' + esc(name) + "</b><span>" + sub + '</span></span><span class="val">' + val + "<small>avg</small></span></li>";
+  if (teams){
+    h += '<h3 class="sub">Teams</h3><ol class="board">' + st.teams.map((x, i) =>
+      row(i, x.t.name, esc(x.t.shooters.map(s => s.name).join(", ")) + " · " + x.n + (x.n === 1 ? " string" : " strings"), avgTxt(x.avg), i === 0 && x.n)).join("") + "</ol>";
+  }
+  h += '<h3 class="sub">Shooters</h3><ol class="board">' + st.rows.map((x, i) =>
+    row(i, x.sh.name, (teams ? esc(x.sh.team) + " · " : "") + x.n + (x.n === 1 ? " string" : " strings") + (x.draw != null ? " · best draw " + fmt(x.draw) : ""), avgTxt(x.avg), i === 0 && x.n)).join("") + "</ol>";
+  h += '<p class="hint">Lowest average score per string wins. Score = time from the beep to the last shot, ' + esc(penaltyTxt()) + "." + (match.shots ? " " + match.shots + " shots per string." : "") + "</p>";
+  if (match.results.length){
+    const log = match.results.slice().sort((a, b) => b.at - a.at);
+    h += '<h3 class="sub">Strings</h3><ol class="log">' + log.map(r => {
+      const sh = findShooter(r.shooterId), pen = [];
+      if (r.misses) pen.push(r.misses + (r.misses === 1 ? " miss" : " misses"));
+      if (r.late) pen.push(r.late + " late");
+      return '<li><span class="r">R' + r.round + '</span><span><b>' + esc(sh ? sh.name : "?") + '</b> <span class="d">' + fmt(r.time) + (pen.length ? " + " + pen.join(", ") : "") + '</span></span><span class="s">' + fmt(r.score) + "</span></li>";
+    }).join("") + "</ol>";
+    h += '<p class="hint">Every string is in the Dynamic Film Room under the shooter\'s name, so you can study any two side by side afterward.</p>';
+  }
+  h += '<div class="tools">';
+  if (match.results.length && !done) h += '<button class="small danger" id="h2hUndo">Undo last string</button>';
+  if (done) h += '<button class="go" id="h2hRematch">Rematch</button><button class="small" id="h2hNew">New event</button>';
+  else h += '<button class="small danger" id="h2hEnd">End event</button>';
+  h += "</div>";
+  boardEl.innerHTML = h;
+}
+function armTwoTap(btn, label, fn){
+  if (!btn.classList.contains("arm")){
+    const orig = btn.textContent; btn.classList.add("arm"); btn.textContent = label;
+    setTimeout(() => { if (btn.isConnected){ btn.classList.remove("arm"); btn.textContent = orig; } }, 3000);
+    return;
+  }
+  fn();
+}
+$("#h2hBoard").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  if (b.id === "h2hGo"){ h2hArmed = true; updateMatchStrip(); setFace("Ready", "0.00", "Split", "–", "Shots 0"); showView("live"); }
+  else if (b.id === "h2hUndo") armTwoTap(b, "Tap again to undo", () => {
+    const last = match.results.slice().sort((x, y) => y.at - x.at)[0];
+    match.results = match.results.filter(r => r !== last); saveMatch(); renderH2H(); toast("Last string removed");
+  });
+  else if (b.id === "h2hEnd") armTwoTap(b, "Tap again to end", () => { match.status = "done"; match.doneAt = Date.now(); saveMatch(); renderH2H(); window.scrollTo({ top: 0 }); });
+  else if (b.id === "h2hNew"){ match = null; saveMatch(); renderH2H(); }
+  else if (b.id === "h2hRematch"){
+    const m = Object.assign({}, match, { id: Date.now(), results: [], status: "live", doneAt: null });
+    requireSafety(H2H_SAFETY(m.ro), () => { match = m; saveMatch(); showView("h2h"); renderH2H(); });
+  }
+});
+
+/* setup */
+function stepVal(k){
+  const v = draft[k];
+  if (k === "rounds") return String(v);
+  if (k === "shots") return v ? String(v) : "Any";
+  if (k === "par") return v ? v.toFixed(1) + " s" : "None";
+  return v ? "+" + v + " s" : "None";
+}
+function stepDraft(k, d){
+  if (k === "rounds") draft.rounds = Math.max(1, Math.min(10, draft.rounds + d));
+  else if (k === "shots") draft.shots = Math.max(0, Math.min(30, draft.shots + d));
+  else {
+    const list = k === "par" ? PAR_STEPS : PEN_STEPS;
+    let i = list.indexOf(draft[k]); if (i < 0) i = 0;
+    draft[k] = list[Math.max(0, Math.min(list.length - 1, i + d))];
+  }
+}
+function renderSetup(){
+  const d = draft;
+  const seg = '<div class="seg" role="group" aria-label="Format"><button data-fmt="teams" aria-pressed="' + (d.format === "teams") + '">Teams</button><button data-fmt="solo" aria-pressed="' + (d.format === "solo") + '">Shooters</button></div>';
+  let who;
+  if (d.format === "teams"){
+    who = d.teams.map((t, ti) => '<div class="team-box"><input class="txt team" id="h2hT' + ti + '" data-team="' + ti + '" value="' + esc(t.name) + '" aria-label="Team ' + (ti + 1) + ' name" maxlength="24">' +
+      t.shooters.map((n, si) => '<div class="name-row"><input class="txt" id="h2hT' + ti + "S" + si + '" data-team="' + ti + '" data-sh="' + si + '" value="' + esc(n) + '" placeholder="Shooter ' + (si + 1) + '" aria-label="' + esc(t.name) + " shooter " + (si + 1) + '" maxlength="24"><button class="small" data-rmsh="' + ti + "," + si + '" aria-label="Remove shooter"' + (t.shooters.length < 2 ? " disabled" : "") + ">×</button></div>").join("") +
+      (t.shooters.length < 3 ? '<button class="small" data-addsh="' + ti + '">+ Add shooter</button>' : "") + "</div>").join("") +
+      '<div class="tools">' + (d.teams.length < 4 ? '<button class="small" id="h2hAddTeam">+ Add team</button>' : "") + (d.teams.length > 2 ? '<button class="small" id="h2hRmTeam">Remove last team</button>' : "") + "</div>";
+  } else {
+    who = d.solo.map((n, i) => '<div class="name-row"><input class="txt" id="h2hP' + i + '" data-solo="' + i + '" value="' + esc(n) + '" placeholder="Shooter ' + (i + 1) + '" aria-label="Shooter ' + (i + 1) + '" maxlength="24"><button class="small" data-rmsolo="' + i + '" aria-label="Remove shooter"' + (d.solo.length < 3 ? " disabled" : "") + ">×</button></div>").join("") +
+      (d.solo.length < 8 ? '<button class="small" id="h2hAddSolo">+ Add shooter</button>' : "") +
+      '<p class="hint">Shooters take turns in this order every round.</p>';
+  }
+  const stepper = (k, label) => '<div class="field"><span class="lbl" id="h2hL_' + k + '">' + label + '</span><div class="stepper" role="group" aria-labelledby="h2hL_' + k + '"><button class="small" data-hk="' + k + '" data-d="-1" aria-label="' + label + ' down">−</button><output class="step-val">' + stepVal(k) + '</output><button class="small" data-hk="' + k + '" data-d="1" aria-label="' + label + ' up">+</button></div></div>';
+  $("#h2hSetup").innerHTML =
+    '<div class="tools"><h2 class="cmp-h grow">Team Training</h2></div>' +
+    '<p class="hint">Competition and team training. Everyone shoots the same string, the app times it, the phone runner adds misses, and the leaderboard keeps score.</p>' +
+    '<div class="h2h-card"><h2>Who\'s shooting</h2>' + seg + who + "</div>" +
+    '<div class="h2h-card"><h2>The string</h2><div class="set-grid">' + stepper("rounds", "Rounds") + stepper("shots", "Shots") + stepper("par", "Time limit") + stepper("missPen", "Per miss") + stepper("latePen", "Per late shot") + "</div>" +
+    '<p class="hint">Score = time from the beep to the last shot, plus penalties. Lowest average score wins.</p></div>' +
+    '<div class="h2h-card"><h2>Safety</h2><label class="lbl" for="h2hRO">Who runs the phone?</label>' +
+    '<input class="txt" id="h2hRO" value="' + esc(d.ro) + '" placeholder="Phone runner or range officer" maxlength="24">' +
+    '<ul class="rules"><li>One shooter on the line at a time.</li><li>The phone runner starts every string. The shooter never touches the phone.</li><li>Everyone else stays behind the line.</li><li>Unload and show clear after every string.</li></ul></div>' +
+    '<p class="msg warn" id="h2hErr" hidden></p>' +
+    '<button class="go" id="h2hStart">Start the event</button>';
+}
+$("#h2hSetup").addEventListener("input", e => {
+  const el = e.target;
+  if (el.id === "h2hRO") draft.ro = el.value;
+  else if (el.dataset.solo != null) draft.solo[+el.dataset.solo] = el.value;
+  else if (el.dataset.sh != null) draft.teams[+el.dataset.team].shooters[+el.dataset.sh] = el.value;
+  else if (el.dataset.team != null) draft.teams[+el.dataset.team].name = el.value;
+  saveDraft();
+});
+$("#h2hSetup").addEventListener("click", e => {
+  const b = e.target.closest("button"); if (!b) return;
+  const d = draft;
+  if (b.dataset.fmt) d.format = b.dataset.fmt;
+  else if (b.dataset.addsh != null) d.teams[+b.dataset.addsh].shooters.push("");
+  else if (b.dataset.rmsh){ const [ti, si] = b.dataset.rmsh.split(",").map(Number); if (d.teams[ti].shooters.length > 1) d.teams[ti].shooters.splice(si, 1); }
+  else if (b.id === "h2hAddTeam") d.teams.push({ name: "Team " + (d.teams.length + 1), shooters: ["", ""] });
+  else if (b.id === "h2hRmTeam"){ if (d.teams.length > 2) d.teams.pop(); }
+  else if (b.id === "h2hAddSolo") d.solo.push("");
+  else if (b.dataset.rmsolo != null){ if (d.solo.length > 2) d.solo.splice(+b.dataset.rmsolo, 1); }
+  else if (b.dataset.hk){ stepDraft(b.dataset.hk, Number(b.dataset.d)); saveDraft(); b.parentNode.querySelector("output").textContent = stepVal(b.dataset.hk); return; }
+  else if (b.id === "h2hStart"){ startEvent(); return; }
+  else return;
+  saveDraft(); renderSetup();
+});
+function startEvent(){
+  const d = draft, ro = d.ro.trim();
+  if (!ro){ showMsg($("#h2hErr"), "Enter who runs the phone. The shooter should never handle it during a string.", true); $("#h2hRO").focus(); return; }
+  let teams;
+  if (d.format === "teams"){
+    teams = d.teams.map((t, ti) => {
+      const tn = t.name.trim() || "Team " + (ti + 1);
+      return { name: tn, shooters: t.shooters.map((n, si) => ({ id: "t" + ti + "s" + si, name: n.trim() || tn + " #" + (si + 1) })) };
+    });
+  } else {
+    teams = d.solo.map((n, i) => { const nm = n.trim() || "Shooter " + (i + 1); return { name: nm, shooters: [{ id: "p" + i, name: nm }] }; });
+  }
+  const m = { id: Date.now(), format: d.format, teams, rounds: d.rounds, shots: d.shots, par: d.par,
+              missPen: d.missPen, latePen: d.latePen, ro, results: [], status: "live" };
+  requireSafety(H2H_SAFETY(ro), () => { match = m; saveMatch(); showView("h2h"); renderH2H(); });
+}
+function h2hStatusText(){
+  if (!match) return "No event running";
+  if (match.status === "done") return "Last event finished · tap for results";
+  const t = currentTurn();
+  return "Event running · Round " + t.round + " of " + match.rounds + " · Up next: " + t.name;
+}
+$("#goH2H").onclick = () => {
+  if (match && match.status === "live") requireSafety(H2H_SAFETY(match.ro), () => { showView("h2h"); renderH2H(); });
+  else { showView("h2h"); renderH2H(); }
+};
 
 /* ---------- export ---------- */
 let exporting = false;
@@ -1593,7 +1979,8 @@ refreshRunCount();
 syncSetupUI();
 setModeUI();
 /* Test hook, only when the address ends in #test */
-if (location.hash === "#test") window.__stc = { loadRun: (b, ext) => loadRun(b, ext, true), DB };
+if (location.hash === "#test") window.__stc = { loadRun: (b, ext) => loadRun(b, ext, true), DB,
+  loadMatchRun: (b, ext) => { lastTurn = currentTurn(); lastParRec = match ? match.par : 0; return loadRun(b, ext, true); } };
 })();
 </script>
 
