@@ -737,7 +737,7 @@ function playEndBeep(at){ playBeep(at, END_HZ, 0.15); playBeep(at + 0.25, END_HZ
 /* Drill quick picks for solo strings: the drill's name sets the round count. */
 document.querySelectorAll("[data-sdrill]").forEach(b => b.onclick = () => {
   settings.drill = b.dataset.sdrill;
-  if (DRILLS[settings.drill]) settings.shots = DRILLS[settings.drill].shots;
+  if (DRILLS[settings.drill]){ settings.shots = DRILLS[settings.drill].shots; settings.par = DRILLS[settings.drill].par; }
   saveSettings(); syncSetupUI();
   if (run && state.mode !== "live") redetect();
 });
@@ -1862,10 +1862,10 @@ function stepVal(k){
 }
 /* Standard drills: the drill's name sets the round count. Times are draw-and-fire; hits aren't scored. */
 const DRILLS = {
-  bill: { name: "Bill Drill",    shots: 6,  note: "6 shots on one target at 7 yd, from the holster." },
-  moz:  { name: "Mozambique",    shots: 3,  note: "2 to the torso, 1 to the head at 7 yd, from the holster." },
-  prez: { name: "El Presidente", shots: 12, note: "3 targets at 10 yd, start facing away: 2 each, reload, 2 each." },
-  fast: { name: "FAST",          shots: 8,  note: "2 in the head box, reload, 6 to the body at 7 yd; gun loaded with 2." }
+  bill: { name: "Bill Drill",    shots: 6,  par: 0,   note: "6 shots on one target at 7 yd, from the holster. No standard par." },
+  moz:  { name: "Mozambique",    shots: 3,  par: 2.5, note: "2 to the torso, 1 to the head at 7 yd, from the holster. Par 2.5 s." },
+  prez: { name: "El Presidente", shots: 12, par: 10,  note: "3 targets at 10 yd, start facing away: 2 each, reload, 2 each. Par 10 s." },
+  fast: { name: "FAST",          shots: 8,  par: 0,   note: "2 in the head box, reload, 6 to the body at 7 yd; gun loaded with 2. No standard par." }
 };
 const drillName = id => (DRILLS[id] ? DRILLS[id].name : "");
 function stepDraft(k, d){
@@ -1927,7 +1927,7 @@ $("#h2hSetup").addEventListener("click", e => {
   else if (b.id === "h2hRmTeam"){ if (d.teams.length > 2) d.teams.pop(); }
   else if (b.id === "h2hAddSolo") d.solo.push("");
   else if (b.dataset.rmsolo != null){ if (d.solo.length > 2) d.solo.splice(+b.dataset.rmsolo, 1); }
-  else if (b.dataset.drill){ d.drill = b.dataset.drill; if (DRILLS[d.drill]){ d.shots = DRILLS[d.drill].shots; d.missPen = 0; } }
+  else if (b.dataset.drill){ d.drill = b.dataset.drill; if (DRILLS[d.drill]){ d.shots = DRILLS[d.drill].shots; d.par = DRILLS[d.drill].par; d.missPen = 0; } }
   else if (b.dataset.hk){
     const wasDrill = !!DRILLS[d.drill];
     stepDraft(b.dataset.hk, Number(b.dataset.d)); saveDraft();
