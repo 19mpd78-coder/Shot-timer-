@@ -372,6 +372,16 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 
     <div class="panel setup">
       <h2>String setup</h2>
+      <div class="field">
+        <span class="lbl">Drill</span>
+        <div class="tools" role="group" aria-label="Drill">
+          <button class="small" data-sdrill="bill" aria-pressed="false">Bill Drill</button>
+          <button class="small" data-sdrill="moz" aria-pressed="false">Mozambique</button>
+          <button class="small" data-sdrill="prez" aria-pressed="false">El Presidente</button>
+          <button class="small" data-sdrill="fast" aria-pressed="false">FAST</button>
+          <button class="small" data-sdrill="custom" aria-pressed="true">Custom</button>
+        </div>
+      </div>
       <div class="setup-grid">
         <div class="field">
           <span class="lbl" id="liveShotsLbl">Shots</span>
@@ -408,6 +418,16 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 
     <div class="panel setup">
       <h2>String setup</h2>
+      <div class="field">
+        <span class="lbl">Drill</span>
+        <div class="tools" role="group" aria-label="Drill">
+          <button class="small" data-sdrill="bill" aria-pressed="false">Bill Drill</button>
+          <button class="small" data-sdrill="moz" aria-pressed="false">Mozambique</button>
+          <button class="small" data-sdrill="prez" aria-pressed="false">El Presidente</button>
+          <button class="small" data-sdrill="fast" aria-pressed="false">FAST</button>
+          <button class="small" data-sdrill="custom" aria-pressed="true">Custom</button>
+        </div>
+      </div>
       <div class="setup-grid">
         <div class="field">
           <span class="lbl" id="revShotsLbl">Shots</span>
@@ -512,6 +532,15 @@ button,label.file{-webkit-tap-highlight-color:transparent}
         </div>
         <button id="cmpToShot" class="small">Jump to faster shot</button>
       </div>
+      <div class="tools">
+        <span class="lbl">Sound</span>
+        <div class="seg" role="group" aria-label="Sound">
+          <button data-sound="both" aria-pressed="true">Both</button>
+          <button data-sound="a" aria-pressed="false">Faster</button>
+          <button data-sound="b" aria-pressed="false">Slower</button>
+          <button data-sound="off" aria-pressed="false">Off</button>
+        </div>
+      </div>
       <div class="panel side-ctrl">
         <div class="tools"><h2 class="grow">Move each side</h2><button id="cmpSync" class="small" aria-pressed="true">Synced</button></div>
         <p class="hint" id="syncHint">Both sides are at the same time from the beep. Drag a side's slider or tap its arrows to run it on its own.</p>
@@ -559,7 +588,7 @@ const store = {
   set(k, v){ try { localStorage.setItem("stc." + k, JSON.stringify(v)); } catch(e){} }
 };
 const BEEP_HZ = 2700, BEEP_DUR = 0.35, LOCK_MS = 70;
-const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0 }, store.get("settings", {}));
+const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0, drill: "custom" }, store.get("settings", {}));
 const saveSettings = () => store.set("settings", settings);
 const thrLin = () => Math.pow(10, settings.thrDb / 20);
 
@@ -705,18 +734,27 @@ const END_HZ = 1900, END_LEN = 0.45;
 function playEndBeep(at){ playBeep(at, END_HZ, 0.15); playBeep(at + 0.25, END_HZ, 0.15); }
 
 /* ---------- string setup: how many shots, how long ---------- */
+/* Drill quick picks for solo strings: the drill's name sets the round count. */
+document.querySelectorAll("[data-sdrill]").forEach(b => b.onclick = () => {
+  settings.drill = b.dataset.sdrill;
+  if (DRILLS[settings.drill]) settings.shots = DRILLS[settings.drill].shots;
+  saveSettings(); syncSetupUI();
+  if (run && state.mode !== "live") redetect();
+});
 const PAR_STEPS = [0, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5, 6, 7, 8, 9, 10, 12, 15, 20, 25, 30];
 function syncSetupUI(){
   document.querySelectorAll('[data-show="shots"]').forEach(el => { el.textContent = settings.shots ? String(settings.shots) : "Any"; });
   document.querySelectorAll('[data-show="par"]').forEach(el => { el.textContent = settings.par ? settings.par.toFixed(1) + " s" : "None"; });
+  document.querySelectorAll("[data-sdrill]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.sdrill === (DRILLS[settings.drill] ? settings.drill : "custom"))));
   const parts = [];
+  const pre = DRILLS[settings.drill] ? DRILLS[settings.drill].name + ": " + DRILLS[settings.drill].note + " Times only, draw and fire. " : "";
   parts.push(settings.shots ? "Counts " + (settings.shots === 1 ? "1 shot" : settings.shots + " shots") + ", and a live string stops after the last one" : "Counts every shot");
   parts.push(settings.par ? "two short beeps at " + settings.par.toFixed(1) + " s mean time's up, and later shots are flagged late" : "no time limit");
-  document.querySelectorAll('[data-show="setupHint"]').forEach(el => { el.textContent = parts.join("; ") + "."; });
+  document.querySelectorAll('[data-show="setupHint"]').forEach(el => { el.textContent = pre + parts.join("; ") + "."; });
 }
 document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => {
   const d = Number(b.dataset.d);
-  if (b.dataset.adj === "shots") settings.shots = Math.max(0, Math.min(30, settings.shots + d));
+  if (b.dataset.adj === "shots"){ settings.shots = Math.max(0, Math.min(30, settings.shots + d)); settings.drill = "custom"; }
   else {
     let i = PAR_STEPS.indexOf(settings.par); if (i < 0) i = 0;
     settings.par = PAR_STEPS[Math.max(0, Math.min(PAR_STEPS.length - 1, i + d))];
@@ -1077,7 +1115,8 @@ async function persistRun(first){
   if (!run || !run.live || !run.beep) return;
   const r = run;
   try {
-    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : "" });
+    const dr = r.match ? (match && match.drill ? drillName(match.drill) : "") : (DRILLS[settings.drill] ? DRILLS[settings.drill].name : "");
+    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : "", drill: dr });
     if (first){
       toast("String saved to the Dynamic Film Room");
       const all = await DB.all();
@@ -1320,7 +1359,7 @@ function renderRunList(){
     const b = document.createElement("button"); b.className = "pick";
     const on = cmp.sel.includes(r.id); b.setAttribute("aria-pressed", String(on));
     const box = document.createElement("span"); box.className = "box"; box.textContent = on ? "✓" : "";
-    const when = document.createElement("span"); when.className = "when"; when.textContent = (r.who ? r.who + " · " : "") + whenTxt(r.id);
+    const when = document.createElement("span"); when.className = "when"; when.textContent = (r.who ? r.who + " · " : "") + (r.drill ? r.drill + " · " : "") + whenTxt(r.id);
     if (on && picked.length === 2){ const t = document.createElement("span"); t.className = "tag"; t.textContent = picked[0].id === r.id ? "FASTER" : "SLOWER"; when.appendChild(t); }
     const nums = document.createElement("span"); nums.className = "nums";
     nums.textContent = "Draw " + fmt(drawOf(r)) + " · " + r.shots.length + (r.shots.length === 1 ? " shot" : " shots") + " · " + fmt(endOf(r));
@@ -1441,6 +1480,7 @@ function cmpPlay(){
   if (Math.min(sidePos("a"), sidePos("b")) >= cmp.end - 0.01) cmp.s = -PRE - Math.min(cmp.off.a, cmp.off.b);
   cmp.playing = true;
   for (const v of [cvA, cvB]) v.playbackRate = cmp.rate;
+  applySound();
   syncVids(true);
   cmp.last = performance.now();
   $("#cmpPlay").textContent = "Pause";
@@ -1572,6 +1612,16 @@ document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
   cmp.mode = b.dataset.mode; store.set("cmpMode", cmp.mode); setModeUI();
   if (cmp.a){ sizeCanvas(); drawCompare(); }
 });
+/* Sound: which side you hear. Both = hear the faster shot land first, then the slower one. */
+cmp.sound = store.get("cmpSound", "both");
+function applySound(){
+  cvA.muted = !(cmp.sound === "both" || cmp.sound === "a");
+  cvB.muted = !(cmp.sound === "both" || cmp.sound === "b");
+  for (const v of [cvA, cvB]) v.volume = 1;
+  document.querySelectorAll("[data-sound]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.sound === cmp.sound)));
+}
+document.querySelectorAll("[data-sound]").forEach(b => b.onclick = () => { cmp.sound = b.dataset.sound; store.set("cmpSound", cmp.sound); applySound(); });
+applySound();
 document.querySelectorAll("[data-rate]").forEach(b => b.onclick = () => {
   cmp.rate = Number(b.dataset.rate);
   document.querySelectorAll("[data-rate]").forEach(x => x.setAttribute("aria-pressed", String(x === b)));
@@ -1621,7 +1671,7 @@ const draft = Object.assign({
   format: "teams",
   teams: [{ name: "Team 1", shooters: ["", ""] }, { name: "Team 2", shooters: ["", ""] }],
   solo: ["", "", ""],
-  rounds: 3, shots: 6, par: 0, missPen: 2, latePen: 1, ro: ""
+  rounds: 3, shots: 6, par: 0, missPen: 2, latePen: 1, ro: "", drill: "custom"
 }, store.get("h2hDraft", {}));
 const saveDraft = () => store.set("h2hDraft", draft);
 const H2H_SAFETY = ro => "Team Training: one shooter on the line at a time. " + ro + " runs the phone and starts every string; the shooter never touches it. Everyone else stays behind the line. Unload and show clear after every string.";
@@ -1655,7 +1705,7 @@ function updateMatchStrip(){
   $("#live .setup").hidden = !!t;
   if (t) $("#fileLbl").hidden = true;
   if (!t) return;
-  $("#msRound").textContent = "Team Training · Round " + t.round + " of " + match.rounds;
+  $("#msRound").textContent = (match.drill ? drillName(match.drill) : "Team Training") + " · Round " + t.round + " of " + match.rounds;
   $("#msName").textContent = t.name;
   $("#msTeam").textContent = match.format === "teams" ? t.team : "";
   $("#msTeam").hidden = match.format !== "teams";
@@ -1741,7 +1791,7 @@ function renderH2H(){
   if (!match){ setupEl.hidden = false; boardEl.hidden = true; renderSetup(); return; }
   setupEl.hidden = true; boardEl.hidden = false;
   const t = currentTurn(), st = standings(), done = match.status === "done", teams = match.format === "teams";
-  let h = '<div class="tools"><h2 class="cmp-h grow">Team Training</h2><span class="hint">' +
+  let h = '<div class="tools"><h2 class="cmp-h grow">Team Training' + (match.drill ? " · " + esc(drillName(match.drill)) : "") + '</h2><span class="hint">' +
     (done ? "Final results" : "Round " + (t ? t.round : match.rounds) + " of " + match.rounds) + "</span></div>";
   if (!done && t){
     h += '<div class="upnext"><span class="lbl">Up next' + (teams ? " · " + esc(t.team) : "") + " · Round " + t.round + '</span><span class="big">' + esc(t.name) + "</span>" +
@@ -1810,9 +1860,17 @@ function stepVal(k){
   if (k === "par") return v ? v.toFixed(1) + " s" : "None";
   return v ? "+" + v + " s" : "None";
 }
+/* Standard drills: the drill's name sets the round count. Times are draw-and-fire; hits aren't scored. */
+const DRILLS = {
+  bill: { name: "Bill Drill",    shots: 6,  note: "6 shots on one target at 7 yd, from the holster." },
+  moz:  { name: "Mozambique",    shots: 3,  note: "2 to the torso, 1 to the head at 7 yd, from the holster." },
+  prez: { name: "El Presidente", shots: 12, note: "3 targets at 10 yd, start facing away: 2 each, reload, 2 each." },
+  fast: { name: "FAST",          shots: 8,  note: "2 in the head box, reload, 6 to the body at 7 yd; gun loaded with 2." }
+};
+const drillName = id => (DRILLS[id] ? DRILLS[id].name : "");
 function stepDraft(k, d){
   if (k === "rounds") draft.rounds = Math.max(1, Math.min(10, draft.rounds + d));
-  else if (k === "shots") draft.shots = Math.max(0, Math.min(30, draft.shots + d));
+  else if (k === "shots"){ draft.shots = Math.max(0, Math.min(30, draft.shots + d)); draft.drill = "custom"; }
   else {
     const list = k === "par" ? PAR_STEPS : PEN_STEPS;
     let i = list.indexOf(draft[k]); if (i < 0) i = 0;
@@ -1838,7 +1896,12 @@ function renderSetup(){
     '<div class="tools"><h2 class="cmp-h grow">Team Training</h2></div>' +
     '<p class="hint">Competition and team training. Everyone shoots the same string, the app times it, the phone runner adds misses, and the leaderboard keeps score.</p>' +
     '<div class="h2h-card"><h2>Who\'s shooting</h2>' + seg + who + "</div>" +
-    '<div class="h2h-card"><h2>The string</h2><div class="set-grid">' + stepper("rounds", "Rounds") + stepper("shots", "Shots") + stepper("par", "Time limit") + stepper("missPen", "Per miss") + stepper("latePen", "Per late shot") + "</div>" +
+    '<div class="h2h-card"><h2>The string</h2>' +
+    '<div class="field"><span class="lbl">Drill</span><div class="tools" role="group" aria-label="Drill">' +
+      Object.keys(DRILLS).map(id => '<button class="small" data-drill="' + id + '" aria-pressed="' + (d.drill === id) + '">' + esc(DRILLS[id].name) + "</button>").join("") +
+      '<button class="small" data-drill="custom" aria-pressed="' + (!DRILLS[d.drill]) + '">Custom</button></div>' +
+      '<p class="hint">' + (DRILLS[d.drill] ? esc(DRILLS[d.drill].note) + " Times only: draw and fire, hits aren't scored." : "Set your own shot count below.") + "</p></div>" +
+    '<div class="set-grid">' + stepper("rounds", "Rounds") + stepper("shots", "Shots") + stepper("par", "Time limit") + stepper("missPen", "Per miss") + stepper("latePen", "Per late shot") + "</div>" +
     '<p class="hint">Score = time from the beep to the last shot, plus penalties. Lowest average score wins.</p></div>' +
     '<div class="h2h-card"><h2>Safety</h2><label class="lbl" for="h2hRO">Who runs the phone?</label>' +
     '<input class="txt" id="h2hRO" value="' + esc(d.ro) + '" placeholder="Phone runner or range officer" maxlength="24">' +
@@ -1864,7 +1927,13 @@ $("#h2hSetup").addEventListener("click", e => {
   else if (b.id === "h2hRmTeam"){ if (d.teams.length > 2) d.teams.pop(); }
   else if (b.id === "h2hAddSolo") d.solo.push("");
   else if (b.dataset.rmsolo != null){ if (d.solo.length > 2) d.solo.splice(+b.dataset.rmsolo, 1); }
-  else if (b.dataset.hk){ stepDraft(b.dataset.hk, Number(b.dataset.d)); saveDraft(); b.parentNode.querySelector("output").textContent = stepVal(b.dataset.hk); return; }
+  else if (b.dataset.drill){ d.drill = b.dataset.drill; if (DRILLS[d.drill]){ d.shots = DRILLS[d.drill].shots; d.missPen = 0; } }
+  else if (b.dataset.hk){
+    const wasDrill = !!DRILLS[d.drill];
+    stepDraft(b.dataset.hk, Number(b.dataset.d)); saveDraft();
+    if (b.dataset.hk === "shots" && wasDrill){ renderSetup(); return; }
+    b.parentNode.querySelector("output").textContent = stepVal(b.dataset.hk); return;
+  }
   else if (b.id === "h2hStart"){ startEvent(); return; }
   else return;
   saveDraft(); renderSetup();
@@ -1881,7 +1950,7 @@ function startEvent(){
   } else {
     teams = d.solo.map((n, i) => { const nm = n.trim() || "Shooter " + (i + 1); return { name: nm, shooters: [{ id: "p" + i, name: nm }] }; });
   }
-  const m = { id: Date.now(), format: d.format, teams, rounds: d.rounds, shots: d.shots, par: d.par,
+  const m = { id: Date.now(), format: d.format, teams, rounds: d.rounds, shots: d.shots, par: d.par, drill: DRILLS[d.drill] ? d.drill : "",
               missPen: d.missPen, latePen: d.latePen, ro, results: [], status: "live" };
   requireSafety(H2H_SAFETY(ro), () => { match = m; saveMatch(); showView("h2h"); renderH2H(); });
 }
