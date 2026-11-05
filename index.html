@@ -258,10 +258,51 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--steel);
   color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
 @media (prefers-reduced-motion:reduce){.rec::before{animation:none}}
+/* ---------- Junior Shooters ---------- */
+.jr{display:flex;flex-direction:column;gap:14px}
+.jr-hero{border:1px solid var(--steel);border-radius:14px;background:var(--brushed);padding:16px;display:flex;flex-direction:column;gap:8px}
+.jr-hero p{margin:0;color:var(--silver);max-width:60ch}
+.jr-kids{display:flex;flex-wrap:wrap;gap:8px}
+.jr-lv{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.jr-lv.locked-lv{opacity:.55}
+.jr-lv.done{border-color:var(--steel)}
+.jr-lv-top{display:flex;align-items:baseline;justify-content:space-between;gap:10px;flex-wrap:wrap}
+.jr-lv-t{font-family:var(--f-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:1.1rem;color:var(--white)}
+.jr-badge{font-family:var(--f-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.72rem;padding:3px 9px;border-radius:99px;border:1px solid var(--line);color:var(--steel)}
+.jr-badge.ok{background:var(--chrome);color:#121417;border-color:#9aa0a8}
+.jr-badge.now{border-color:var(--silver);color:var(--white)}
+.jr-steps{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:6px}
+.jr-step{all:unset;box-sizing:border-box;cursor:pointer;width:100%;display:grid;grid-template-columns:26px 1fr auto;gap:10px;align-items:center;padding:10px 12px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2)}
+.jr-step:hover{border-color:var(--steel)}
+.jr-step:focus-visible{outline:2px solid var(--silver);outline-offset:2px}
+.jr-step[disabled]{cursor:default;opacity:.6}
+.jr-tick{width:22px;height:22px;border-radius:50%;border:2px solid var(--steel);display:grid;place-items:center;font-size:.8rem;color:#121417;font-weight:700}
+.jr-step.is-done .jr-tick{background:var(--chrome);border-color:#9aa0a8}
+.jr-step .jr-s-t{color:var(--white)}
+.jr-step .jr-s-m{font-family:var(--f-display);letter-spacing:.12em;text-transform:uppercase;font-size:.72rem;color:var(--steel)}
+.jr-card{border:1px solid var(--line);border-radius:14px;background:var(--panel);padding:18px;display:flex;flex-direction:column;gap:12px}
+.jr-card h2{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:1.25rem;color:var(--white);text-wrap:balance}
+.jr-card p{margin:0;color:var(--silver);font-size:1.02rem;max-width:62ch}
+.jr-card ol,.jr-card ul{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:10px;color:var(--white);font-size:1.02rem;max-width:62ch}
+.jr-card li b{color:var(--white)}
+.jr-key{border-left:3px solid var(--silver);padding:8px 12px;background:var(--panel-2);border-radius:0 10px 10px 0;color:var(--white)!important;font-weight:600}
+.jr-q{display:flex;flex-direction:column;gap:8px}
+.jr-q .jr-opt{all:unset;box-sizing:border-box;cursor:pointer;padding:12px 14px;border-radius:10px;border:1px solid var(--line);background:var(--panel-2);color:var(--white)}
+.jr-q .jr-opt:hover{border-color:var(--steel)}
+.jr-q .jr-opt:focus-visible{outline:2px solid var(--silver);outline-offset:2px}
+.jr-q .jr-opt.right{border-color:#9aa0a8;background:#22262b}
+.jr-q .jr-opt.wrong{border-color:var(--hot);background:#1a1213}
+.jr-checks{display:flex;flex-direction:column;gap:10px}
+.jr-checks label{display:flex;gap:12px;align-items:flex-start;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2);cursor:pointer;color:var(--white)}
+.jr-checks input{width:22px;height:22px;flex:none;margin-top:1px;accent-color:#c4c9cf}
+.jr-pin{font-family:var(--f-digits);font-size:1.6rem;letter-spacing:.4em;width:7.5em;max-width:100%;padding:8px 12px;border-radius:10px;border:1px solid var(--line);background:var(--bg);color:var(--white);text-align:center}
+.jr-row{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+.jr-log{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:.88rem;color:var(--steel)}
+.jr-progress{display:flex;align-items:center;gap:10px}
+.jr-progress .bar{max-width:none}
 </style>
 </head>
 <body>
-
 
 <div class="app">
   <header>
@@ -359,6 +400,11 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <span class="tile-t">Team Training</span>
       <span class="tile-d">Competitive, head to head. Set up teams or take turns as shooters on the same string. A phone runner keeps score, and the leaderboard shows who's fastest.</span>
       <span class="tile-m" id="h2hStatus">No event running</span>
+    </button>
+    <button class="tile" id="goKids">
+      <span class="tile-t">Junior Shooters</span>
+      <span class="tile-d">Safety first, for kids with a parent or guardian. Learn the safety rules and the right eye and ear protection, then move up step by step: BB gun, .22, then larger calibers. A grown-up signs off every level.</span>
+      <span class="tile-m" id="kidsStatus">Start with safety basics</span>
     </button>
     <div class="panel fastest" id="fastest">
       <div class="tools"><h2 class="grow">Fastest times</h2><span class="hint">On this phone</span></div>
@@ -608,6 +654,8 @@ button,label.file{-webkit-tap-highlight-color:transparent}
     <div id="h2hSetup" style="display:flex;flex-direction:column;gap:14px"></div>
     <div id="h2hBoard" hidden style="display:flex;flex-direction:column;gap:14px"></div>
   </section>
+  <section id="kids" class="jr" hidden aria-label="Junior Shooters"></section>
+
 
   <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Splits are to 1/100 s.</p>
   </main>
@@ -686,10 +734,10 @@ let view = "menu";
 function showView(name){
   if (name !== "compare" && typeof cmpPause === "function") cmpPause();
   if (name !== "review" && typeof pv !== "undefined" && pv) pv.pause();
-  ["menu", "live", "review", "compare", "h2h"].forEach(v => { $("#" + v).hidden = v !== name; });
+  ["menu", "live", "review", "compare", "h2h", "kids"].forEach(v => { $("#" + v).hidden = v !== name; });
   $("#btnMenu").hidden = name === "menu";
   view = name;
-  if (name === "menu"){ refreshRunCount(); if (typeof renderBoard === "function") renderBoard(); }
+  if (name === "menu"){ if (typeof jrStatusText === "function") $("#kidsStatus").textContent = jrStatusText(); refreshRunCount(); if (typeof renderBoard === "function") renderBoard(); }
   window.scrollTo({ top: 0 });
 }
 async function refreshRunCount(){
@@ -2163,6 +2211,292 @@ async function saveBlob(blob, name){
   toast("Saved to Downloads as " + name);
 }
 $("#btnSave").onclick = exportVideo;
+/* ---------- Junior Shooters ----------
+   Safety and fundamentals for kids, with a parent or guardian in charge.
+   Everything stays on this phone. Juniors never appear on Fastest times. */
+const JR_LESSONS = {
+  rules: { t: "The four safety rules", body: [
+    ["ol",
+      "<b>Treat every gun as if it is loaded.</b> Even a BB gun. Even if someone says it's empty.",
+      "<b>Always point the muzzle in a safe direction.</b> Never at a person, a pet, or anything you don't want to shoot.",
+      "<b>Keep your finger off the trigger</b> until your sights are on the target and you're ready to shoot. Rest it straight along the side of the gun.",
+      "<b>Know your target and what's beyond it.</b> A BB or bullet can miss, or go through, and hit whatever is behind."],
+    ["key", "Junior rule: only touch a gun when your grown-up says so and is right there with you."]] },
+  found: { t: "If you find a gun", body: [
+    ["key", "Stop. Don't touch it. Leave the area. Tell a grown-up right away."],
+    ["p", "This goes for any gun, anywhere: at home, at a friend's house, at school or outside. Even if you think it's a toy or a BB gun."],
+    ["p", "You will never be in trouble for telling a grown-up."]] },
+  eyes: { t: "Eye protection", body: [
+    ["p", "Wear safety glasses every time you shoot, and every time you watch someone else shoot."],
+    ["ul",
+      "Look for <b>Z87.1</b> printed on the frame. That means the glasses are made to stop hits.",
+      "BBs are hard and round, and they bounce off hard things. A BB can come straight back at you.",
+      "Regular glasses and sunglasses aren't enough unless they're marked Z87.1.",
+      "Glasses go on before any gun comes out, and stay on until everything is put away."]] },
+  ears: { t: "Hearing protection", body: [
+    ["p", "Gunshots are loud enough to hurt your hearing for good, even just one shot. Hearing damage doesn't heal."],
+    ["ul",
+      "Wear earmuffs or foam earplugs whenever a firearm is shot near you. Many shooters wear both.",
+      "Look for the <b>NRR</b> number on the package. A higher number blocks more sound.",
+      "Most BB guns are quieter, but wearing ear protection is a great habit. For .22 and bigger, it's a must."]] },
+  commands: { t: "Range commands", body: [
+    ["p", "Your grown-up is the range officer. When they give a command, you do it right away."],
+    ["ul",
+      "<b>Cease fire!</b> Stop shooting now. Finger off the trigger, muzzle in a safe direction, and wait.",
+      "<b>Load</b> or <b>Make ready.</b> Only when you're told.",
+      "<b>Unload and show clear.</b> Open the action so your grown-up can see it's empty.",
+      "<b>Go forward.</b> Only when every gun is unloaded and set down."],
+    ["key", "Anyone can call \"Cease fire!\" if they see something unsafe. That includes you."]] },
+  bbsetup: { t: "Setting up a safe BB range", body: [
+    ["ul",
+      "Shoot into a <b>BB trap</b> or a thick backstop made for BBs.",
+      "Never shoot at metal, concrete, rocks, glass or water. BBs bounce.",
+      "Make sure nobody and nothing is behind or near the target.",
+      "Everyone nearby wears safety glasses.",
+      "Paper targets are best for learning."]] },
+  stance: { t: "Stance and hold", body: [
+    ["ul",
+      "Start sitting at a bench with the gun on a rest. It's the steadiest way to learn.",
+      "Standing: feet about shoulder-width apart, weight balanced.",
+      "Hold the gun firmly but don't squeeze it tight. Rifle stock snug against your shoulder."]] },
+  sights: { t: "Sight picture", body: [
+    ["ul",
+      "Line up the front sight and the rear sight so they're even.",
+      "Put the lined-up sights on the target.",
+      "Focus your eye on the front sight. The target looks a little fuzzy, and that's normal."]] },
+  trigger: { t: "Trigger control", body: [
+    ["ul",
+      "Only when your sights are on the target and you're ready: finger onto the trigger.",
+      "Press straight back, slow and smooth.",
+      "The shot should almost surprise you.",
+      "After the shot, keep aiming for a moment, then take your finger off the trigger."]] },
+  first22: { t: "Your first real firearm", body: [
+    ["key", "A .22 is a real firearm. Its bullet can travel more than a mile."],
+    ["ul",
+      "Every safety rule matters even more now.",
+      "Your grown-up stays right beside you for every shot.",
+      "Hearing protection is a must, every time."]] },
+  loading: { t: "Loading and unloading", body: [
+    ["ul",
+      "Load only when your grown-up says so, with the muzzle pointed at the target.",
+      "To unload: take the magazine out first, then open the action and check the chamber.",
+      "Show your grown-up it's empty every time.",
+      "Not sure? Stop, keep it pointed safe, and ask."]] },
+  ammo: { t: "The right ammunition", body: [
+    ["ul",
+      "Only use ammunition that exactly matches what's stamped on the gun.",
+      "Your grown-up hands out the ammo. Never pick up loose rounds.",
+      "Never mix BBs, pellets and cartridges."]] },
+  recoil: { t: "Recoil and control", body: [
+    ["ul",
+      "Bigger calibers kick harder and are much louder. Start with just a few rounds.",
+      "A firm grip and a good stance help you stay in control.",
+      "Earplugs and earmuffs together are a good idea.",
+      "It's always okay to stop if something doesn't feel right."]] },
+  together: { t: "Moving up, together", body: [
+    ["ul",
+      "Your grown-up decides when you're ready for each new gun. Not your age, and not your friends.",
+      "Start every new gun with the four rules and a slow, careful first session.",
+      "Safe first, accurate second, fast last."]] }
+};
+const JR_QUIZ = [
+  { q: "How should you treat every gun?", a: ["As if it's loaded", "As empty if a grown-up says so", "Like a toy if it's a BB gun"], c: 0 },
+  { q: "Where does your finger go until your sights are on the target?", a: ["On the trigger, ready", "Off the trigger, straight along the side", "Anywhere, as long as the safety is on"], c: 1 },
+  { q: "You find a gun at a friend's house. What do you do?", a: ["Check if it's loaded", "Show your friend", "Don't touch it, leave, and tell a grown-up"], c: 2 },
+  { q: "Do you need safety glasses for a BB gun?", a: ["Yes, BBs can bounce back", "No, BBs are too small", "Only for bigger guns"], c: 0 },
+  { q: "Why wear hearing protection?", a: ["To look like a pro", "Gunshots can hurt your hearing for good", "So you can't hear the range commands"], c: 1 },
+  { q: "Where should the muzzle point?", a: ["At the ground by your feet", "Wherever is comfortable", "In a safe direction, never at anything you don't want to shoot"], c: 2 },
+  { q: "Someone yells \"Cease fire!\" What do you do?", a: ["Stop now, finger off the trigger, muzzle safe, and wait", "Finish your shot first", "Put the gun down and run"], c: 0 },
+  { q: "What's a good backstop for BBs?", a: ["A metal sign", "A BB trap made for BBs", "A brick wall"], c: 1 }
+];
+const JR_LEVELS = [
+  { n: 1, t: "Safety basics", sub: "No gun needed", lessons: ["rules", "found", "eyes", "ears", "commands"], quiz: true, sessions: 0 },
+  { n: 2, t: "BB gun & air rifle", sub: "With a grown-up, every time", lessons: ["bbsetup", "stance", "sights", "trigger"], sessions: 3 },
+  { n: 3, t: ".22 rimfire", sub: "A real firearm, grown-up right beside you", lessons: ["first22", "loading", "ammo"], sessions: 3 },
+  { n: 4, t: "Larger calibers", sub: "Only when your grown-up says you're ready", lessons: ["recoil", "together"], sessions: 3 }
+];
+let jr = store.get("junior", { kids: [], cur: null, pin: "" });
+const jrSave = () => store.set("junior", jr);
+let jrView = { v: "home" };
+const jh = s => String(s).replace(/[&<>"']/g, ch => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[ch]));
+const jrKid = () => jr.kids.find(k => k.id === jr.cur) || null;
+const jrLevelOpen = (k, n) => n === 1 || !!(k.signed && k.signed[n - 1]);
+function jrReq(k, L){
+  const lessons = L.lessons.filter(id => k.lessons && k.lessons[id]).length;
+  const sess = (k.sessions || []).filter(s => s.lvl === L.n).length;
+  const quiz = !L.quiz || !!k.quiz;
+  return { lessons, sess, quiz, ready: lessons === L.lessons.length && sess >= L.sessions && quiz };
+}
+function jrCurrentLevel(k){ for (const L of JR_LEVELS) if (!(k.signed && k.signed[L.n])) return L.n; return 5; }
+function jrStatusText(){
+  const k = jrKid(); if (!k) return "Start with safety basics";
+  const n = jrCurrentLevel(k);
+  return n > 4 ? k.name + " · all levels signed off" : k.name + " · Level " + n + ": " + JR_LEVELS[n - 1].t;
+}
+function jrBody(body){
+  return body.map(([type, ...items]) => {
+    if (type === "p") return "<p>" + items[0] + "</p>";
+    if (type === "key") return '<p class="jr-key">' + items[0] + "</p>";
+    return "<" + type + ">" + items.map(i => "<li>" + i + "</li>").join("") + "</" + type + ">";
+  }).join("");
+}
+function jrRender(){
+  const el = $("#kids"); const k = jrKid(); const v = jrView.v;
+  let html = "";
+  if (!k || v === "add"){
+    html = `<div class="jr-hero"><h2 class="cmp-h">Junior Shooters</h2>
+      <p>Safety first. A parent or guardian is in charge of every step, and signs off each level before the next one opens.</p>
+      <p class="hint">Juniors never appear on Fastest times. Nothing here leaves this phone.</p></div>
+      ${jr.kids.length ? `<div class="panel"><h2>Juniors on this phone</h2><div class="jr-kids">${jr.kids.map(x => `<button class="small" data-act="pick" data-id="${x.id}">${jh(x.name)}</button>`).join("")}</div></div>` : ""}
+      <div class="panel"><h2>Add a junior</h2>
+        <div class="field"><label class="lbl" for="jrName">First name or nickname</label>
+        <input class="txt" id="jrName" maxlength="20" autocomplete="off" placeholder="e.g. Sam">
+        <p class="hint">First name or nickname only. It stays on this phone.</p>
+        <p class="msg warn" id="jrNameErr" hidden></p></div>
+        <div class="jr-row"><button class="go" data-act="add">Add junior</button>${k ? '<button class="small" data-act="home">Cancel</button>' : ""}</div></div>`;
+  } else if (v === "lesson"){
+    const L = JR_LESSONS[jrView.id];
+    const done = k.lessons && k.lessons[jrView.id];
+    html = `<div class="jr-row"><button class="small" data-act="home">‹ Back to levels</button></div>
+      <article class="jr-card"><span class="lbl">Lesson</span><h2>${L.t}</h2>${jrBody(L.body)}</article>
+      <button class="go" data-act="learned" data-id="${jrView.id}">${done ? "Got it ✓ · back to levels" : "I learned this"}</button>`;
+  } else if (v === "quiz"){
+    const i = jrView.i, Q = JR_QUIZ[i];
+    const picked = jrView.picked;
+    html = `<div class="jr-row"><button class="small" data-act="home">‹ Back to levels</button></div>
+      <div class="jr-card"><div class="jr-progress"><span class="lbl">Question ${i + 1} of ${JR_QUIZ.length}</span><div class="bar"><i style="width:${Math.round(i / JR_QUIZ.length * 100)}%"></i></div></div>
+      <h2>${jh(Q.q)}</h2>
+      <div class="jr-q">${Q.a.map((a, j) => `<button class="jr-opt${picked != null ? (j === Q.c ? " right" : j === picked ? " wrong" : "") : ""}" data-act="answer" data-j="${j}" ${picked != null ? "disabled" : ""}>${jh(a)}</button>`).join("")}</div>
+      ${picked != null ? `<p class="${picked === Q.c ? "jr-key" : "msg warn"}">${picked === Q.c ? "That's right!" : "Not quite. The right answer is highlighted. You'll need to start the quiz over, so take another look at the lessons."}</p>
+        <button class="go" data-act="${picked === Q.c ? (i + 1 < JR_QUIZ.length ? "next" : "quizdone") : "home"}">${picked === Q.c ? (i + 1 < JR_QUIZ.length ? "Next question" : "Finish quiz") : "Back to lessons"}</button>` : ""}</div>`;
+  } else if (v === "check"){
+    const L = JR_LEVELS[jrView.lvl - 1];
+    const items = ["Safety glasses on everyone, marked Z87.1",
+      L.n >= 3 ? "Hearing protection on everyone" : "Hearing protection on (a great habit)",
+      L.n === 2 ? "BB trap or safe backstop, with nothing and nobody behind it" : "Safe backstop, with nothing and nobody behind it",
+      "My grown-up is right here and in charge",
+      "Muzzle pointed in a safe direction, finger off the trigger"];
+    html = `<div class="jr-row"><button class="small" data-act="home">‹ Back to levels</button></div>
+      <div class="jr-card"><span class="lbl">Level ${L.n} · ${jh(L.t)}</span><h2>Before you shoot</h2>
+      <p>Check every box together with your grown-up.</p>
+      <div class="jr-checks">${items.map((t, j) => `<label><input type="checkbox" data-chk="${j}"><span>${t}</span></label>`).join("")}</div>
+      <button class="go" data-act="session" disabled>Start practice session</button>
+      <p class="hint">Focus on safe handling, sight picture and smooth trigger presses. Not speed.</p></div>`;
+  } else if (v === "sign"){
+    const L = JR_LEVELS[jrView.lvl - 1];
+    const newPin = !jr.pin;
+    html = `<div class="jr-row"><button class="small" data-act="home">‹ Back to levels</button></div>
+      <div class="jr-card"><span class="lbl">For the grown-up</span><h2>Sign off Level ${L.n}: ${jh(L.t)}</h2>
+      <div class="jr-checks"><label><input type="checkbox" id="jrAttest"><span>I'm ${jh(k.name)}'s parent or guardian. I've watched ${jh(k.name)} follow the safety rules${L.n === 1 ? " and explain them back to me" : " at this level"}, and I'm ready to supervise the next step.</span></label></div>
+      ${newPin ? `<p>Create a 4-digit grown-up PIN. You'll use it for every sign-off.</p>
+        <div class="jr-row"><input class="jr-pin" id="jrPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="New PIN" placeholder="••••">
+        <input class="jr-pin" id="jrPin2" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Repeat PIN" placeholder="••••"></div>`
+      : `<div class="jr-row"><input class="jr-pin" id="jrPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Grown-up PIN" placeholder="••••"></div>`}
+      <p class="msg warn" id="jrPinErr" hidden></p>
+      <button class="go" data-act="dosign">Sign off</button>
+      ${newPin ? "" : '<p class="hint">Forgot the PIN? <button class="small" data-act="resetpin">Reset PIN</button></p>'}</div>`;
+  } else {
+    const cur = jrCurrentLevel(k);
+    html = `<div class="jr-hero"><div class="jr-lv-top"><h2 class="cmp-h">Junior Shooters · ${jh(k.name)}</h2>
+        <div class="jr-row">${jr.kids.length > 1 ? jr.kids.filter(x => x.id !== k.id).map(x => `<button class="small" data-act="pick" data-id="${x.id}">${jh(x.name)}</button>`).join("") : ""}<button class="small" data-act="addview">+ Junior</button></div></div>
+      <p>${cur > 4 ? "Every level is signed off. Great job, and keep shooting safe!" : "You're on Level " + cur + ": " + JR_LEVELS[cur - 1].t + ". Learn each lesson, then ask your grown-up to sign you off."}</p></div>`;
+    for (const L of JR_LEVELS){
+      const open = jrLevelOpen(k, L.n), signed = k.signed && k.signed[L.n], r = jrReq(k, L);
+      const badge = signed ? '<span class="jr-badge ok">Signed off</span>' : open ? '<span class="jr-badge now">In progress</span>' : '<span class="jr-badge">Locked</span>';
+      html += `<div class="jr-lv${signed ? " done" : ""}${open ? "" : " locked-lv"}"><div class="jr-lv-top"><span class="jr-lv-t">Level ${L.n} · ${jh(L.t)}</span>${badge}</div>
+        <span class="hint">${jh(L.sub)}</span>`;
+      if (open && !signed){
+        html += `<ul class="jr-steps">${L.lessons.map(id => { const d = k.lessons && k.lessons[id];
+            return `<li><button class="jr-step${d ? " is-done" : ""}" data-act="lesson" data-id="${id}"><span class="jr-tick">${d ? "✓" : ""}</span><span class="jr-s-t">${JR_LESSONS[id].t}</span><span class="jr-s-m">Lesson</span></button></li>`; }).join("")}
+          ${L.quiz ? `<li><button class="jr-step${k.quiz ? " is-done" : ""}" data-act="quiz" ${r.lessons < L.lessons.length ? "disabled" : ""}><span class="jr-tick">${k.quiz ? "✓" : ""}</span><span class="jr-s-t">Safety quiz</span><span class="jr-s-m">${k.quiz ? "Passed" : r.lessons < L.lessons.length ? "After lessons" : JR_QUIZ.length + " questions"}</span></button></li>` : ""}
+          ${L.sessions ? `<li><button class="jr-step${r.sess >= L.sessions ? " is-done" : ""}" data-act="check" data-lvl="${L.n}" ${r.lessons < L.lessons.length ? "disabled" : ""}><span class="jr-tick">${r.sess >= L.sessions ? "✓" : ""}</span><span class="jr-s-t">Practice with your grown-up</span><span class="jr-s-m">${Math.min(r.sess, L.sessions)} of ${L.sessions} sessions</span></button></li>` : ""}
+          </ul>
+          <button class="${r.ready ? "go" : "small"}" data-act="sign" data-lvl="${L.n}" ${r.ready ? "" : "disabled"}>Grown-up sign-off</button>`;
+      } else if (signed){
+        html += `<span class="hint">Signed off ${new Date(signed).toLocaleDateString()}</span>
+          <div class="jr-row">${L.lessons.map(id => `<button class="small" data-act="lesson" data-id="${id}">${JR_LESSONS[id].t}</button>`).join("")}
+          ${L.sessions ? `<button class="small" data-act="check" data-lvl="${L.n}">Practice again</button>` : ""}</div>`;
+      } else {
+        html += `<span class="hint">Opens after your grown-up signs off Level ${L.n - 1}.</span>`;
+      }
+      html += "</div>";
+    }
+    const log = (k.sessions || []).slice(-5).reverse();
+    if (log.length) html += `<div class="panel"><h2>Recent practice</h2><ul class="jr-log">${log.map(s => `<li>${new Date(s.at).toLocaleDateString()} · Level ${s.lvl} · ${jh(JR_LEVELS[s.lvl - 1].t)}</li>`).join("")}</ul></div>`;
+    html += `<p class="hint">Safety basics are adapted from the four universal firearm safety rules. Juniors never appear on Fastest times, and nothing here leaves this phone. <button class="small" data-act="remove">Remove ${jh(k.name)}</button></p>`;
+  }
+  el.innerHTML = html;
+  window.scrollTo({ top: 0 });
+}
+$("#kids").addEventListener("change", e => {
+  if (e.target.matches("[data-chk]")){
+    const all = [...$("#kids").querySelectorAll("[data-chk]")].every(c => c.checked);
+    $("#kids").querySelector('[data-act="session"]').disabled = !all;
+  }
+});
+$("#kids").addEventListener("click", e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const act = b.dataset.act, k = jrKid();
+  const go = v => { jrView = v; jrRender(); };
+  if (act === "home") return go({ v: "home" });
+  if (act === "addview") return go({ v: "add" });
+  if (act === "pick"){ jr.cur = +b.dataset.id; jrSave(); return go({ v: "home" }); }
+  if (act === "add"){
+    const n = cleanName($("#jrName").value);
+    if (!n) return showMsg($("#jrNameErr"), "Type a first name or nickname.", true);
+    if (!nameOk(n)) return showMsg($("#jrNameErr"), "That name isn't allowed. Please keep it clean and family-friendly.", true);
+    const id = Date.now(); jr.kids.push({ id, name: n, lessons: {}, quiz: false, sessions: [], signed: {} }); jr.cur = id; jrSave();
+    return go({ v: "home" });
+  }
+  if (act === "lesson") return go({ v: "lesson", id: b.dataset.id });
+  if (act === "learned"){ k.lessons = k.lessons || {}; k.lessons[b.dataset.id] = true; jrSave(); return go({ v: "home" }); }
+  if (act === "quiz") return go({ v: "quiz", i: 0, picked: null });
+  if (act === "answer"){ jrView.picked = +b.dataset.j; return jrRender(); }
+  if (act === "next") return go({ v: "quiz", i: jrView.i + 1, picked: null });
+  if (act === "quizdone"){ k.quiz = true; jrSave(); toast("Quiz passed! Ask your grown-up to sign you off."); return go({ v: "home" }); }
+  if (act === "check") return go({ v: "check", lvl: +b.dataset.lvl });
+  if (act === "session"){
+    k.sessions = k.sessions || []; k.sessions.push({ lvl: jrView.lvl, at: Date.now() }); jrSave();
+    toast("Practice session logged. Shoot safe and have fun!"); return go({ v: "home" });
+  }
+  if (act === "sign") return go({ v: "sign", lvl: +b.dataset.lvl });
+  if (act === "resetpin"){ jr.pin = ""; jrSave(); return go({ v: "sign", lvl: jrView.lvl }); }
+  if (act === "dosign"){
+    const err = $("#jrPinErr");
+    if (!$("#jrAttest").checked) return showMsg(err, "Please check the box to confirm.", true);
+    const p = $("#jrPin").value.trim();
+    if (!jr.pin){
+      if (!/^\d{4}$/.test(p)) return showMsg(err, "Choose a PIN of exactly 4 numbers.", true);
+      if (p !== $("#jrPin2").value.trim()) return showMsg(err, "The two PINs don't match.", true);
+      jr.pin = p;
+    } else if (p !== jr.pin) return showMsg(err, "That PIN isn't right.", true);
+    k.signed = k.signed || {}; k.signed[jrView.lvl] = Date.now(); jrSave();
+    toast(jrView.lvl < 4 ? "Level " + jrView.lvl + " signed off. Level " + (jrView.lvl + 1) + " is open!" : "All levels signed off!");
+    return go({ v: "home" });
+  }
+  if (act === "remove") return go({ v: "remove" });
+});
+/* remove a junior: in-page confirmation (no browser dialogs) */
+const _jrRender = jrRender;
+jrRender = function(){
+  if (jrView.v !== "remove") return _jrRender();
+  const k = jrKid();
+  $("#kids").innerHTML = `<div class="jr-card"><h2>Remove ${jh(k.name)}?</h2><p>This deletes ${jh(k.name)}'s lessons, practice log and sign-offs from this phone.</p>
+    ${jr.pin ? '<div class="jr-row"><input class="jr-pin" id="jrPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Grown-up PIN" placeholder="••••"></div>' : ""}
+    <p class="msg warn" id="jrPinErr" hidden></p>
+    <div class="jr-row"><button class="go stop" data-act="doremove">Remove</button><button class="small" data-act="home">Cancel</button></div></div>`;
+};
+$("#kids").addEventListener("click", e => {
+  const b = e.target.closest('[data-act="doremove"]'); if (!b) return;
+  if (jr.pin && $("#jrPin").value.trim() !== jr.pin) return showMsg($("#jrPinErr"), "That PIN isn't right.", true);
+  jr.kids = jr.kids.filter(x => x.id !== jr.cur); jr.cur = jr.kids.length ? jr.kids[0].id : null; jrSave();
+  jrView = { v: "home" }; jrRender();
+});
+$("#goKids").onclick = () => requireSafety(
+  "Junior Shooters: a parent or guardian should be with the junior for every lesson and every practice session.",
+  () => { jrView = { v: "home" }; showView("kids"); jrRender(); }
+);
+$("#kidsStatus").textContent = jrStatusText();
 refreshRunCount();
 syncSetupUI();
 $("#shooterName").value = settings.name || "";
@@ -2173,6 +2507,7 @@ if (location.hash === "#test") window.__stc = { loadRun: (b, ext, drill, name) =
   loadMatchRun: (b, ext) => { lastTurn = currentTurn(); lastParRec = match ? match.par : 0; return loadRun(b, ext, true); } };
 })();
 </script>
+
 
 </body>
 </html>
