@@ -240,6 +240,20 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .winner .big{font-family:var(--f-display);font-weight:700;font-size:2rem;letter-spacing:.08em;text-transform:uppercase;
   background:var(--chrome);-webkit-background-clip:text;background-clip:text;color:transparent;overflow-wrap:anywhere}
 .danger.arm{border-color:var(--hot);color:#ffd9da}
+.fastest{gap:12px}
+.ft-list{list-style:none;margin:0;padding:0;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.ft-list li{display:grid;grid-template-columns:2.2em minmax(0,1fr) auto 64px;gap:10px;align-items:center;padding:6px 10px;border-top:1px solid var(--line);min-height:44px}
+.ft-list li:first-child{border-top:0}
+.ft-list li.top{background:var(--panel-2)}
+.ft-list .pos{font-family:var(--f-display);font-weight:700;color:var(--steel)}
+.ft-list li.top .pos{color:var(--white)}
+.ft-list .nm{overflow-wrap:anywhere;color:var(--white)}
+.ft-list .tm{font-family:var(--f-digits);font-variant-numeric:tabular-nums;color:var(--white);font-size:1.05rem}
+.ft-list .small{min-height:36px;padding:4px 8px}
+.ft-list li.ft-empty{display:block;color:var(--steel)}
+.ft-player{display:flex;flex-direction:column;gap:8px}
+.ft-player video{width:100%;max-height:60vh;background:#000;border-radius:10px}
+.ft-now{font-family:var(--f-digits);color:var(--white)}
 .unlock-hint{font-family:var(--f-display);font-weight:600;letter-spacing:.14em;text-transform:uppercase;font-size:.74rem;color:var(--steel)}
 .toast{position:fixed;left:50%;bottom:calc(18px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--panel-2);border:1px solid var(--steel);
   color:var(--white);padding:10px 16px;border-radius:10px;font-size:.92rem;max-width:calc(100% - 32px);z-index:5}
@@ -346,6 +360,21 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <span class="tile-d">Competitive, head to head. Set up teams or take turns as shooters on the same string. A phone runner keeps score, and the leaderboard shows who's fastest.</span>
       <span class="tile-m" id="h2hStatus">No event running</span>
     </button>
+    <div class="panel fastest" id="fastest">
+      <div class="tools"><h2 class="grow">Fastest times</h2><span class="hint">On this phone</span></div>
+      <div class="tools" role="group" aria-label="Drill">
+        <button class="small" data-bdrill="bill" aria-pressed="true">Bill Drill</button>
+        <button class="small" data-bdrill="moz" aria-pressed="false">Mozambique</button>
+        <button class="small" data-bdrill="prez" aria-pressed="false">El Presidente</button>
+        <button class="small" data-bdrill="fast" aria-pressed="false">FAST</button>
+      </div>
+      <ol class="ft-list" id="ftList"></ol>
+      <div class="ft-player" id="ftPlayer" hidden>
+        <div class="tools"><span class="grow ft-now" id="ftNow"></span><button class="small" id="ftClose">Close</button></div>
+        <video id="ftVid" controls playsinline preload="auto"></video>
+      </div>
+      <p class="hint">Times only: draw and fire, from the beep to the last shot. Only live strings recorded in this app, with the start beep and every shot of the drill heard, are counted. The top 5 keep their video.</p>
+    </div>
   </section>
 
   <section id="live" hidden style="display:flex;flex-direction:column;gap:14px">
@@ -369,6 +398,12 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <div class="face-side"><span class="lbl" id="faceSplitLbl">Split</span><span class="digits sm" id="faceSplit">–</span><span class="lbl" id="faceShots">Shots 0</span></div>
     </div>
     <p class="msg" id="liveMsg" hidden></p>
+
+    <div class="field" id="nameField">
+      <label class="lbl" for="shooterName">Shooter name · for Fastest times</label>
+      <input class="txt" id="shooterName" maxlength="20" placeholder="Your name" autocomplete="nickname">
+      <p class="msg warn" id="nameErr" hidden></p>
+    </div>
 
     <div class="panel setup">
       <h2>String setup</h2>
@@ -640,6 +675,7 @@ const DB = (() => {
     put: rec => tx("readwrite", st => st.put(rec)),
     all: () => tx("readonly", st => st.getAll()),
     count: () => tx("readonly", st => st.count()),
+    get: id => tx("readonly", st => st.get(id)),
     del: id => tx("readwrite", st => st.delete(id))
   };
 })();
@@ -653,7 +689,7 @@ function showView(name){
   ["menu", "live", "review", "compare", "h2h"].forEach(v => { $("#" + v).hidden = v !== name; });
   $("#btnMenu").hidden = name === "menu";
   view = name;
-  if (name === "menu") refreshRunCount();
+  if (name === "menu"){ refreshRunCount(); if (typeof renderBoard === "function") renderBoard(); }
   window.scrollTo({ top: 0 });
 }
 async function refreshRunCount(){
@@ -924,7 +960,8 @@ async function startRun(){
   const B = Math.max(1, Math.round(c.sampleRate / 1000));
   const cfg = liveCfg();
   const parAt = cfg.par ? beepAt + cfg.par : null;
-  live = { src, proc, mute, det, beepAt, parAt, par: cfg.par, cfg, turn: liveTurn(), shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
+  const drillId = (h2hArmed && match && match.status === "live") ? (match.drill || "") : (DRILLS[settings.drill] ? settings.drill : "");
+  live = { src, proc, mute, det, beepAt, parAt, par: cfg.par, cfg, drillId, turn: liveTurn(), shots: [], t0: c.currentTime, samples: 0, acc: 0, peak: 0, raf: 0, started: performance.now() };
   playBeep(beepAt);
   if (parAt) playEndBeep(parAt);
 
@@ -975,6 +1012,8 @@ function stopRun(){
   const s = live.shots;
   lastParRec = live.par || 0;
   lastTurn = live.turn || null;
+  lastDrill = live.drillId || "";
+  lastName = live.turn ? live.turn.name : (settings.name || "");
   if (s.length) setFace("Time", fmt(s[s.length - 1] - live.beepAt), s.length === 1 ? "Draw" : "Split",
     fmt(s.length === 1 ? s[0] - live.beepAt : s[s.length - 1] - s[s.length - 2]), "Shots " + s.length);
   live = null;
@@ -984,7 +1023,7 @@ function stopRun(){
   $("#recDot").hidden = true;
   try { rec.stop(); } catch(e){ resetLive(); }
 }
-let lastParRec = 0, lastTurn = null;
+let lastParRec = 0, lastTurn = null, lastDrill = "", lastName = "";
 function resetLive(){
   state.mode = "idle";
   $("#btnStart").textContent = "Start"; $("#btnStart").disabled = false; $("#btnStart").classList.remove("stop");
@@ -1033,7 +1072,8 @@ async function loadRun(blob, ext, isLive){
     const sr = audio.sampleRate, len = audio.length, pcm = new Float32Array(len);
     for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
     if (run && run.url) URL.revokeObjectURL(run.url);
-    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now(), parRec: isLive ? lastParRec : 0, match: isLive ? lastTurn : null };
+    run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now(), parRec: isLive ? lastParRec : 0, match: isLive ? lastTurn : null,
+      drillId: isLive ? lastDrill : "", name: isLive ? lastName : "" };
     const noBeep = !run.beep;
     /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
     if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
@@ -1067,6 +1107,7 @@ function redetect(){
   /* the app's own time-up beeps are not shots */
 
   const rc = runCfg();
+  run.extra = rc.shots ? Math.max(0, shots.length - rc.shots) : 0;
   if (rc.shots) shots = shots.slice(0, rc.shots);
   run.shots = shots;
   render();
@@ -1115,14 +1156,15 @@ async function persistRun(first){
   if (!run || !run.live || !run.beep) return;
   const r = run;
   try {
-    const dr = r.match ? (match && match.drill ? drillName(match.drill) : "") : (DRILLS[settings.drill] ? DRILLS[settings.drill].name : "");
-    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : "", drill: dr });
+    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : (r.name || ""), drill: drillName(r.drillId) });
+    const rank = boardUpdate(r);
     if (first){
-      toast("String saved to the Dynamic Film Room");
+      toast(rank ? "Saved · #" + rank + " on " + drillName(r.drillId) + " Fastest times" : "String saved to the Dynamic Film Room");
       const all = await DB.all();
       if (all.length > MAX_RUNS){
+        const keep = boardProtected();
         all.sort((a, b) => b.id - a.id);
-        for (const old of all.slice(MAX_RUNS)) await DB.del(old.id);
+        for (const old of all.slice(MAX_RUNS)) if (!keep.has(old.id)) await DB.del(old.id);
       }
     }
   } catch(e){
@@ -1133,6 +1175,7 @@ function showParResult(s, b){
   const el = $("#parResult"), bits = [], rc = runCfg();
   if (rc.shots && b != null){
     bits.push(s.length >= rc.shots ? "All " + rc.shots + " shots found." : "Found " + s.length + " of " + rc.shots + " shots. Raise the sensitivity or add the missing ones.");
+    if (run && run.extra) bits.push("Heard " + run.extra + (run.extra === 1 ? " more shot" : " more shots") + " after shot " + rc.shots + ". To count " + (run.extra === 1 ? "it" : "them") + ", raise Shots in String setup.");
   }
   if (rc.par && b != null && s.length){
     const total = s[s.length - 1] - b, late = s.filter(t => t - b > rc.par + 0.005).length;
@@ -1374,6 +1417,7 @@ function renderRunList(){
     del.onclick = async () => {
       if (!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent = "Delete?"; setTimeout(() => { if (del.isConnected){ del.classList.remove("arm"); del.textContent = "×"; } }, 3000); return; }
       try { await DB.del(r.id); } catch(e){}
+      boardRemove(r.id);
       cmp.sel = cmp.sel.filter(id => id !== r.id);
       toast("String deleted");
       await loadRunList();
@@ -1703,6 +1747,7 @@ function updateMatchStrip(){
   const t = liveTurn();
   $("#matchStrip").hidden = !t;
   $("#live .setup").hidden = !!t;
+  $("#nameField").hidden = !!t;
   if (t) $("#fileLbl").hidden = true;
   if (!t) return;
   $("#msRound").textContent = (match.drill ? drillName(match.drill) : "Team Training") + " · Round " + t.round + " of " + match.rounds;
@@ -1941,6 +1986,8 @@ $("#h2hSetup").addEventListener("click", e => {
 function startEvent(){
   const d = draft, ro = d.ro.trim();
   if (!ro){ showMsg($("#h2hErr"), "Enter who runs the phone. The shooter should never handle it during a string.", true); $("#h2hRO").focus(); return; }
+  const allNames = [ro].concat(d.format === "teams" ? d.teams.flatMap(t => [t.name].concat(t.shooters)) : d.solo);
+  if (allNames.some(n => !nameOk(n))){ showMsg($("#h2hErr"), "One of the names isn't allowed. Please keep names clean and family-friendly.", true); return; }
   let teams;
   if (d.format === "teams"){
     teams = d.teams.map((t, ti) => {
@@ -1964,6 +2011,78 @@ $("#goH2H").onclick = () => {
   if (match && match.status === "live") requireSafety(H2H_SAFETY(match.ro), () => { showView("h2h"); renderH2H(); });
   else { showView("h2h"); renderH2H(); }
 };
+
+/* ---------- fastest times (kept on this phone) ---------- */
+/* One board per drill: top 20 times; the top 5 keep their video. Only live strings recorded in the app
+   with the start beep heard and the drill's full shot count are posted. Times only: draw and fire. */
+const BOARD_MAX = 20, BOARD_VIDEO = 5;
+let board = store.get("board", {});
+const saveBoard = () => store.set("board", board);
+const BAD = ["fuck","fuk","fck","phuck","shit","bitch","biatch","cunt","asshole","dickhead","pussy","bastard","slut","whore","faggot","nigg","retard","twat","wank","dildo","boob","penis","vagina","porn","hitler","kkk","motherf","prick","douche","jackass","dumbass","skank","tranny","wetback","jizz","bollock","titties"];
+const BAD_SHORT = ["ass","cum","tit","tits","fag","sex","piss","hoe","hoes","nazi","rape","cock","spic","chink","kike","gook","coon","dyke"];
+function nameOk(n){
+  const leet = String(n || "").toLowerCase()
+    .replace(/[0]/g, "o").replace(/[@4]/g, "a").replace(/[1!|]/g, "i").replace(/3/g, "e").replace(/[5$]/g, "s").replace(/7/g, "t");
+  const squashed = leet.replace(/[^a-z]/g, "");
+  if (BAD.some(w => squashed.includes(w))) return false;
+  return !leet.split(/[^a-z]+/).some(w => BAD_SHORT.includes(w));
+}
+const cleanName = n => String(n || "").replace(/[^\p{L}\p{N} .'-]/gu, "").replace(/\s+/g, " ").trim().slice(0, 20);
+$("#shooterName").addEventListener("change", e => {
+  const v = cleanName(e.target.value);
+  if (v && !nameOk(v)){ showMsg($("#nameErr"), "That name isn't allowed. Please keep it clean and family-friendly.", true); e.target.value = ""; settings.name = ""; }
+  else { showMsg($("#nameErr"), ""); e.target.value = v; settings.name = v; }
+  saveSettings();
+});
+function boardUpdate(r){
+  const d = DRILLS[r.drillId];
+  if (!d) return 0;
+  const list = (board[r.drillId] || []).filter(e => e.id !== r.id);
+  const ok = r.live && r.beep && r.beep.auto && r.shots.length === d.shots && nameOk(r.name || "Shooter");
+  if (ok) list.push({ id: r.id, name: r.name || "Shooter", time: +(r.shots[r.shots.length - 1] - r.beep.t).toFixed(3) });
+  list.sort((a, b) => a.time - b.time || a.id - b.id);
+  board[r.drillId] = list.slice(0, BOARD_MAX); saveBoard();
+  const i = board[r.drillId].findIndex(e => e.id === r.id);
+  return i < 0 ? 0 : i + 1;
+}
+function boardRemove(id){ Object.keys(board).forEach(k => { board[k] = (board[k] || []).filter(e => e.id !== id); }); saveBoard(); }
+function boardProtected(){ const set = new Set(); Object.values(board).forEach(l => (l || []).slice(0, BOARD_VIDEO).forEach(e => set.add(e.id))); return set; }
+let ftDrill = DRILLS[store.get("ftDrill", "bill")] ? store.get("ftDrill", "bill") : "bill";
+function renderBoard(){
+  document.querySelectorAll("[data-bdrill]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.bdrill === ftDrill)));
+  const list = board[ftDrill] || [], ol = $("#ftList"); ol.textContent = "";
+  if (!list.length){
+    const li = document.createElement("li"); li.className = "ft-empty";
+    li.textContent = "No times yet. Pick " + DRILLS[ftDrill].name + " on Live timer and shoot it to post one.";
+    ol.appendChild(li); return;
+  }
+  list.forEach((e, i) => {
+    const li = document.createElement("li"); if (i < BOARD_VIDEO) li.className = "top";
+    const pos = document.createElement("span"); pos.className = "pos"; pos.textContent = String(i + 1);
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = e.name;
+    const tm = document.createElement("span"); tm.className = "tm"; tm.textContent = fmt(e.time);
+    li.append(pos, nm, tm);
+    if (i < BOARD_VIDEO){
+      const b = document.createElement("button"); b.className = "small"; b.textContent = "Play";
+      b.setAttribute("aria-label", "Play video of " + e.name + ", " + fmt(e.time) + " seconds");
+      b.onclick = () => playBoard(e); li.appendChild(b);
+    } else { li.appendChild(document.createElement("span")); }
+    ol.appendChild(li);
+  });
+}
+async function playBoard(e){
+  let rec = null; try { rec = await DB.get(e.id); } catch(err){}
+  if (!rec || !rec.blob){ toast("That video is no longer on this phone."); return; }
+  const v = $("#ftVid");
+  if (v._url) URL.revokeObjectURL(v._url);
+  v._url = URL.createObjectURL(rec.blob);
+  v.onloadedmetadata = () => { try { v.currentTime = Math.max(0, rec.beep - 1); } catch(err){} v.play().catch(() => {}); };
+  v.src = v._url;
+  $("#ftNow").textContent = e.name + " · " + drillName(ftDrill) + " · " + fmt(e.time) + " s";
+  $("#ftPlayer").hidden = false;
+}
+$("#ftClose").onclick = () => { const v = $("#ftVid"); v.pause(); $("#ftPlayer").hidden = true; };
+document.querySelectorAll("[data-bdrill]").forEach(b => b.onclick = () => { ftDrill = b.dataset.bdrill; store.set("ftDrill", ftDrill); $("#ftClose").onclick(); renderBoard(); });
 
 /* ---------- export ---------- */
 let exporting = false;
@@ -2046,9 +2165,11 @@ async function saveBlob(blob, name){
 $("#btnSave").onclick = exportVideo;
 refreshRunCount();
 syncSetupUI();
+$("#shooterName").value = settings.name || "";
+renderBoard();
 setModeUI();
 /* Test hook, only when the address ends in #test */
-if (location.hash === "#test") window.__stc = { loadRun: (b, ext) => loadRun(b, ext, true), DB,
+if (location.hash === "#test") window.__stc = { loadRun: (b, ext, drill, name) => { lastDrill = drill || ""; lastName = name || ""; return loadRun(b, ext, true); }, DB,
   loadMatchRun: (b, ext) => { lastTurn = currentTurn(); lastParRec = match ? match.par : 0; return loadRun(b, ext, true); } };
 })();
 </script>
