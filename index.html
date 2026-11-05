@@ -300,9 +300,27 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .jr-log{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:4px;font-size:.88rem;color:var(--steel)}
 .jr-progress{display:flex;align-items:center;gap:10px}
 .jr-progress .bar{max-width:none}
+/* ---------- Friends + share sheet ---------- */
+.sheet{position:fixed;inset:0;z-index:50;background:rgba(0,0,0,.72);display:flex;align-items:flex-end;justify-content:center;
+  padding:max(16px,env(safe-area-inset-top,0px)) max(12px,env(safe-area-inset-right,0px)) max(12px,env(safe-area-inset-bottom,0px)) max(12px,env(safe-area-inset-left,0px));overflow-y:auto}
+.sheet-card{width:100%;max-width:520px;margin:auto 0 0;border:1px solid var(--steel);border-radius:16px;background:var(--panel);padding:18px;display:flex;flex-direction:column;gap:12px;box-shadow:0 -8px 40px rgba(0,0,0,.6)}
+.sheet-card h2{margin:0;font-family:var(--f-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:1.15rem;color:var(--white);text-wrap:balance}
+.sheet-card p{margin:0;color:var(--silver)}
+.sheet-sum{font-family:var(--f-digits);color:var(--white);font-size:1.05rem}
+.fr-names{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.fr-names li{display:flex;align-items:center;gap:10px;padding:8px 10px;border-top:1px solid var(--line)}
+.fr-names li:first-child{border-top:0}
+.fr-names .nm{flex:1;min-width:0;color:var(--white);overflow-wrap:anywhere}
+.fr-names .ct{color:var(--steel);font-size:.85rem}
+.fr-names .del.arm{border-color:var(--hot);color:#ffd9da}
+.runs .share{min-width:0;min-height:44px;padding:0 10px}
+.jr-switch{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--white);align-items:flex-start}
+.jr-switch input{margin-top:1px;flex:none}
+.jr-switch.on{border-color:var(--silver)}
 </style>
 </head>
 <body>
+
 
 <div class="app">
   <header>
@@ -401,6 +419,11 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <span class="tile-d">Competitive, head to head. Set up teams or take turns as shooters on the same string. A phone runner keeps score, and the leaderboard shows who's fastest.</span>
       <span class="tile-m" id="h2hStatus">No event running</span>
     </button>
+    <button class="tile" id="goFriends">
+      <span class="tile-t">Friends</span>
+      <span class="tile-d">Shooting at different times? Share your live strings with friends, add theirs to your phone, and race on one Friends board for every drill.</span>
+      <span class="tile-m" id="friendsStatus">No friends added yet</span>
+    </button>
     <button class="tile" id="goKids">
       <span class="tile-t">Junior Shooters</span>
       <span class="tile-d">Safety first, for kids with a parent or guardian. Learn the safety rules and the right eye and ear protection, then move up step by step: BB gun, .22, then larger calibers. A grown-up signs off every level.</span>
@@ -449,6 +472,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <label class="lbl" for="shooterName">Shooter name · for Fastest times</label>
       <input class="txt" id="shooterName" maxlength="20" placeholder="Your name" autocomplete="nickname">
       <p class="msg warn" id="nameErr" hidden></p>
+      <label class="check jr-switch" id="juniorLbl"><input type="checkbox" id="juniorSw"><span>Junior shooter · keeps this string off Fastest times and the Friends board. Sharing it needs a grown-up's PIN.</span></label>
     </div>
 
     <div class="panel setup">
@@ -581,6 +605,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <button id="btnSave" class="go">Save video</button>
       <button id="btnNew" class="ghost">New run</button>
     </div>
+    <button id="btnShare" class="ghost" hidden>Share with a friend</button>
     <div class="progress" id="prog" hidden><div class="bar"><i id="progBar"></i></div><span id="progTxt">0%</span></div>
     <p class="hint">Saving plays the clip through once at normal speed while it burns in the times, so keep this screen open until it finishes.</p>
   </section>
@@ -655,6 +680,41 @@ button,label.file{-webkit-tap-highlight-color:transparent}
     <div id="h2hBoard" hidden style="display:flex;flex-direction:column;gap:14px"></div>
   </section>
   <section id="kids" class="jr" hidden aria-label="Junior Shooters"></section>
+
+  <section id="friends" class="jr" hidden aria-label="Friends">
+    <div class="jr-hero">
+      <h2 class="cmp-h">Friends</h2>
+      <p>Share strings with friends who shoot at different times. Every friend's string you add lands on this Friends board and in your Dynamic Film Room.</p>
+    </div>
+    <div class="panel">
+      <h2>Add a friend's string</h2>
+      <label class="go file">Choose shared video<input type="file" id="friendIn" accept="video/*,.webm,.mp4"></label>
+      <p class="hint">Your friend taps <b>Share</b> on one of their strings and sends it to you. Send with <b>Quick Share, Google Drive or email</b> so the times come with it. Text messages can shrink the video and drop the times.</p>
+    </div>
+    <div class="panel fastest">
+      <div class="tools"><h2 class="grow">Friends fastest</h2><span class="hint">Best time per shooter</span></div>
+      <div class="tools" role="group" aria-label="Drill">
+        <button class="small" data-fdrill="bill" aria-pressed="true">Bill Drill</button>
+        <button class="small" data-fdrill="moz" aria-pressed="false">Mozambique</button>
+        <button class="small" data-fdrill="prez" aria-pressed="false">El Presidente</button>
+        <button class="small" data-fdrill="fast" aria-pressed="false">FAST</button>
+      </div>
+      <ol class="ft-list" id="frList"></ol>
+      <div class="ft-player" id="frPlayer" hidden>
+        <div class="tools"><span class="grow ft-now" id="frNow"></span><button class="small" id="frClose">Close</button></div>
+        <video id="frVid" controls playsinline preload="auto"></video>
+      </div>
+      <p class="hint">Same rules as Fastest times: only live strings recorded in Shot Dynamics, start beep heard, every shot of the drill counted. Times only, draw and fire. Junior strings never appear here.</p>
+    </div>
+    <div class="panel">
+      <h2>Friends on this phone</h2>
+      <ul class="fr-names" id="frNames"></ul>
+    </div>
+    <div class="panel">
+      <h2>Share your strings</h2>
+      <p class="hint">Right after you record, tap <b>Share with a friend</b>. For older strings, open the Dynamic Film Room and tap <b>Share</b> next to the string.</p>
+    </div>
+  </section>
 
 
   <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Splits are to 1/100 s.</p>
@@ -734,10 +794,10 @@ let view = "menu";
 function showView(name){
   if (name !== "compare" && typeof cmpPause === "function") cmpPause();
   if (name !== "review" && typeof pv !== "undefined" && pv) pv.pause();
-  ["menu", "live", "review", "compare", "h2h", "kids"].forEach(v => { $("#" + v).hidden = v !== name; });
+  ["menu", "live", "review", "compare", "h2h", "kids", "friends"].forEach(v => { $("#" + v).hidden = v !== name; });
   $("#btnMenu").hidden = name === "menu";
   view = name;
-  if (name === "menu"){ if (typeof jrStatusText === "function") $("#kidsStatus").textContent = jrStatusText(); refreshRunCount(); if (typeof renderBoard === "function") renderBoard(); }
+  if (name === "menu"){ if (typeof jrStatusText === "function") $("#kidsStatus").textContent = jrStatusText(); if (typeof friendsStatusText === "function") $("#friendsStatus").textContent = friendsStatusText(); refreshRunCount(); if (typeof renderBoard === "function") renderBoard(); }
   window.scrollTo({ top: 0 });
 }
 async function refreshRunCount(){
@@ -1062,6 +1122,7 @@ function stopRun(){
   lastTurn = live.turn || null;
   lastDrill = live.drillId || "";
   lastName = live.turn ? live.turn.name : (settings.name || "");
+  lastJunior = !!settings.junior;
   if (s.length) setFace("Time", fmt(s[s.length - 1] - live.beepAt), s.length === 1 ? "Draw" : "Split",
     fmt(s.length === 1 ? s[0] - live.beepAt : s[s.length - 1] - s[s.length - 2]), "Shots " + s.length);
   live = null;
@@ -1071,7 +1132,7 @@ function stopRun(){
   $("#recDot").hidden = true;
   try { rec.stop(); } catch(e){ resetLive(); }
 }
-let lastParRec = 0, lastTurn = null, lastDrill = "", lastName = "";
+let lastParRec = 0, lastTurn = null, lastDrill = "", lastName = "", lastJunior = false;
 function resetLive(){
   state.mode = "idle";
   $("#btnStart").textContent = "Start"; $("#btnStart").disabled = false; $("#btnStart").classList.remove("stop");
@@ -1087,9 +1148,10 @@ function onRecStop(){
 $("#btnStart").onclick = () => { if (state.mode === "idle") startRun(); else if (state.mode === "live") stopRun(); };
 
 /* ---------- load a clip ---------- */
-$("#fileIn").onchange = e => {
+$("#fileIn").onchange = async e => {
   const f = e.target.files && e.target.files[0]; e.target.value = "";
   if (!f) return;
+  if (await hasShare(f)){ importFile(f); return; }
   const ext = /webm/i.test(f.type || f.name) ? "webm" : "mp4";
   showView("live");
   state.mode = "processing";
@@ -1121,7 +1183,7 @@ async function loadRun(blob, ext, isLive){
     for (let ch = 0; ch < audio.numberOfChannels; ch++){ const d = audio.getChannelData(ch); for (let i = 0; i < len; i++) pcm[i] += d[i] / audio.numberOfChannels; }
     if (run && run.url) URL.revokeObjectURL(run.url);
     run = { blob, ext, url: URL.createObjectURL(blob), pcm, sr, beep: detectBeep(pcm, sr), shots: [], live: !!isLive, id: Date.now(), parRec: isLive ? lastParRec : 0, match: isLive ? lastTurn : null,
-      drillId: isLive ? lastDrill : "", name: isLive ? lastName : "" };
+      drillId: isLive ? lastDrill : "", name: isLive ? lastName : "", junior: isLive ? lastJunior : false };
     const noBeep = !run.beep;
     /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
     if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
@@ -1134,6 +1196,7 @@ async function loadRun(blob, ext, isLive){
     redetect();
     showMsg($("#liveMsg"), "");
     showView("review");
+    $("#btnShare").hidden = !run.live;
     if (run.live) persistRun(true);
     if (noBeep) showMsg($("#revMsg"), "No start beep in this clip, so the clock starts at the beginning of the video. To start it somewhere else, pause the video there and tap Set beep at playhead.");
     else showMsg($("#revMsg"), "");
@@ -1204,11 +1267,13 @@ async function persistRun(first){
   if (!run || !run.live || !run.beep) return;
   const r = run;
   try {
-    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : (r.name || ""), drill: drillName(r.drillId) });
+    await DB.put({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), who: r.match ? r.match.name : (r.name || ""), drill: drillName(r.drillId),
+      drillId: r.drillId || "", beepAuto: !!r.beep.auto, junior: !!r.junior });
     const rank = boardUpdate(r);
+    fbOwn(r);
     if (first){
       toast(rank ? "Saved · #" + rank + " on " + drillName(r.drillId) + " Fastest times" : "String saved to the Dynamic Film Room");
-      const all = await DB.all();
+      const all = (await DB.all()).filter(x => !x.friend);
       if (all.length > MAX_RUNS){
         const keep = boardProtected();
         all.sort((a, b) => b.id - a.id);
@@ -1450,7 +1515,8 @@ function renderRunList(){
     const b = document.createElement("button"); b.className = "pick";
     const on = cmp.sel.includes(r.id); b.setAttribute("aria-pressed", String(on));
     const box = document.createElement("span"); box.className = "box"; box.textContent = on ? "✓" : "";
-    const when = document.createElement("span"); when.className = "when"; when.textContent = (r.who ? r.who + " · " : "") + (r.drill ? r.drill + " · " : "") + whenTxt(r.id);
+    const when = document.createElement("span"); when.className = "when"; when.textContent = (r.who ? r.who + " · " : "") + (r.drill ? r.drill + " · " : "") + whenTxt(r.friend && r.sharedAt ? r.sharedAt : r.id);
+    if (r.friend || r.junior){ const t = document.createElement("span"); t.className = "tag"; t.textContent = [r.friend ? "FRIEND" : "", r.junior ? "JUNIOR" : ""].filter(Boolean).join(" · "); when.appendChild(t); }
     if (on && picked.length === 2){ const t = document.createElement("span"); t.className = "tag"; t.textContent = picked[0].id === r.id ? "FASTER" : "SLOWER"; when.appendChild(t); }
     const nums = document.createElement("span"); nums.className = "nums";
     nums.textContent = "Draw " + fmt(drawOf(r)) + " · " + r.shots.length + (r.shots.length === 1 ? " shot" : " shots") + " · " + fmt(endOf(r));
@@ -1465,12 +1531,14 @@ function renderRunList(){
     del.onclick = async () => {
       if (!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent = "Delete?"; setTimeout(() => { if (del.isConnected){ del.classList.remove("arm"); del.textContent = "×"; } }, 3000); return; }
       try { await DB.del(r.id); } catch(e){}
-      boardRemove(r.id);
+      boardRemove(r.id); fbRemove(r.id);
       cmp.sel = cmp.sel.filter(id => id !== r.id);
       toast("String deleted");
       await loadRunList();
     };
-    li.append(b, del); list.appendChild(li);
+    if (!r.friend){ const sh = document.createElement("button"); sh.className = "small share"; sh.textContent = "Share"; sh.setAttribute("aria-label", "Share string from " + whenTxt(r.id)); sh.onclick = () => openShare(r); li.append(b, sh, del); }
+    else li.append(b, del);
+    list.appendChild(li);
   });
 }
 function setSrc(v, r){
@@ -2086,7 +2154,7 @@ function boardUpdate(r){
   const d = DRILLS[r.drillId];
   if (!d) return 0;
   const list = (board[r.drillId] || []).filter(e => e.id !== r.id);
-  const ok = r.live && r.beep && r.beep.auto && r.shots.length === d.shots && nameOk(r.name || "Shooter");
+  const ok = !r.junior && r.live && r.beep && r.beep.auto && r.shots.length === d.shots && nameOk(r.name || "Shooter");
   if (ok) list.push({ id: r.id, name: r.name || "Shooter", time: +(r.shots[r.shots.length - 1] - r.beep.t).toFixed(3) });
   list.sort((a, b) => a.time - b.time || a.id - b.id);
   board[r.drillId] = list.slice(0, BOARD_MAX); saveBoard();
@@ -2497,13 +2565,258 @@ $("#goKids").onclick = () => requireSafety(
   () => { jrView = { v: "home" }; showView("kids"); jrRender(); }
 );
 $("#kidsStatus").textContent = jrStatusText();
+/* ---------- Friends: share strings phone to phone ----------
+   A shared string is the original video with its run data (beep, shots, drill, name) and a
+   check value added to the end of the file. The receiving app reads that data, checks it,
+   and adds the string to its Film Room and Friends board. No server: the file travels by
+   Quick Share, Drive, email, etc. Junior strings need a grown-up on both phones. */
+const SD_MAGIC = "SDRUN1!!", SD_KEY = "shot-dynamics/friends/v1";
+const enc = new TextEncoder();
+const hex = b => [...new Uint8Array(b)].map(x => x.toString(16).padStart(2, "0")).join("");
+const sha = async buf => hex(await crypto.subtle.digest("SHA-256", buf));
+const recDrillId = r => r.drillId || Object.keys(DRILLS).find(k => DRILLS[k].name === r.drill) || "";
+const recTime = r => r.shots && r.shots.length ? r.shots[r.shots.length - 1] - r.beep : null;
+async function buildShare(rec){
+  const meta = JSON.stringify({ v: 1, app: "Shot Dynamics", id: rec.id, name: rec.who || "Shooter", drillId: recDrillId(rec),
+    beep: rec.beep, beepAuto: rec.beepAuto !== false, shots: rec.shots, junior: !!rec.junior, ext: rec.ext, type: rec.blob.type || "video/webm", at: Date.now() });
+  const buf = await rec.blob.arrayBuffer();
+  const sig = await sha(enc.encode(SD_KEY + "|" + await sha(buf) + "|" + meta));
+  const tj = enc.encode(JSON.stringify({ m: meta, s: sig }));
+  const len = new Uint8Array(4); new DataView(len.buffer).setUint32(0, tj.length, true);
+  return new Blob([buf, tj, len, enc.encode(SD_MAGIC)], { type: rec.blob.type || "video/webm" });
+}
+async function readShare(file){
+  const n = file.size; if (n < 16) return null;
+  const tail = new Uint8Array(await file.slice(n - 12).arrayBuffer());
+  if (new TextDecoder().decode(tail.slice(4)) !== SD_MAGIC) return null;
+  const len = new DataView(tail.buffer).getUint32(0, true);
+  if (!len || len > 500000 || len + 12 >= n) return null;
+  const tj = JSON.parse(new TextDecoder().decode(await file.slice(n - 12 - len, n - 12).arrayBuffer()));
+  const vbuf = await file.slice(0, n - 12 - len).arrayBuffer();
+  const ok = tj.s === await sha(enc.encode(SD_KEY + "|" + await sha(vbuf) + "|" + tj.m));
+  const m = JSON.parse(tj.m);
+  return { m, ok, video: new Blob([vbuf], { type: m.type || "video/webm" }) };
+}
+async function hasShare(file){
+  try { const n = file.size; if (n < 16) return false; return new TextDecoder().decode(new Uint8Array(await file.slice(n - 8).arrayBuffer())) === SD_MAGIC; } catch(e){ return false; }
+}
+
+/* ---------- in-page sheet (no browser dialogs) ---------- */
+function openSheet(html){
+  closeSheet();
+  const s = document.createElement("div"); s.className = "sheet"; s.id = "sheet"; s.setAttribute("role", "dialog"); s.setAttribute("aria-modal", "true");
+  s.innerHTML = '<div class="sheet-card">' + html + "</div>";
+  document.body.appendChild(s);
+  s.addEventListener("click", e => { if (e.target === s || e.target.closest("[data-sheet=close]")) closeSheet(); });
+  const f = s.querySelector("input,button.go"); if (f) try { f.focus({ preventScroll: true }); } catch(e){}
+  return s;
+}
+function closeSheet(){ const s = $("#sheet"); if (s) s.remove(); }
+const pinFields = () => jr.pin
+  ? '<div class="jr-row"><input class="jr-pin" id="shPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Grown-up PIN" placeholder="••••"></div>'
+  : '<p>Create a 4-digit grown-up PIN for this phone. It\'s the same PIN Junior Shooters uses for sign-offs.</p><div class="jr-row"><input class="jr-pin" id="shPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="New PIN" placeholder="••••"><input class="jr-pin" id="shPin2" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Repeat PIN" placeholder="••••"></div>';
+function checkGrownUp(s){
+  const err = s.querySelector("#shErr");
+  if ([...s.querySelectorAll("[data-need]")].some(c => !c.checked)){ showMsg(err, "Please check every box.", true); return false; }
+  const p = s.querySelector("#shPin").value.trim();
+  if (!jr.pin){
+    if (!/^\d{4}$/.test(p)){ showMsg(err, "Choose a PIN of exactly 4 numbers.", true); return false; }
+    if (p !== s.querySelector("#shPin2").value.trim()){ showMsg(err, "The two PINs don't match.", true); return false; }
+    jr.pin = p; jrSave();
+  } else if (p !== jr.pin){ showMsg(err, "That PIN isn't right.", true); return false; }
+  return true;
+}
+const shareName = (rec, t) => ("Shot Dynamics - " + (rec.who || "Shooter") + " - " + (rec.drill || "String") + (t != null ? " " + fmt(t) : ""))
+  .replace(/[\\/:*?"<>|]+/g, "") + "." + (rec.ext || "webm");
+async function deliver(blob, name){
+  const f = new File([blob], name, { type: blob.type || "video/webm" });
+  try {
+    if (navigator.canShare && navigator.share && navigator.canShare({ files: [f] })){ await navigator.share({ files: [f], title: "Shot Dynamics string" }); toast("Shared"); return; }
+  } catch(e){ if (e && e.name === "AbortError") return; }
+  await saveBlob(blob, name);
+  toast("Saved. Now send it to your friend with Quick Share, Drive or email.");
+}
+async function openShare(rec){
+  if (!rec || !rec.blob){ toast("That video is no longer on this phone."); return; }
+  if (rec.friend){ toast("Only strings recorded on this phone can be shared."); return; }
+  const t = recTime(rec), d = recDrillId(rec);
+  const sum = jh((rec.who || "Shooter") + " · " + (d ? drillName(d) : "String") + " · " + fmt(t) + " s · " + rec.shots.length + (rec.shots.length === 1 ? " shot" : " shots"));
+  const how = '<p class="hint">Send it with <b>Quick Share, Google Drive or email</b> so the original file arrives. Your friend adds it in <b>Friends → Add a friend\'s string</b>.</p>';
+  const s = rec.junior
+    ? openSheet(`<span class="lbl">Junior shooter · grown-up approval</span><h2>Share a junior's video</h2><p class="sheet-sum">${sum}</p>
+        <p>Junior videos go only to a friend's family, and only when a grown-up on both phones approves. Never post them publicly.</p>
+        <div class="jr-checks">
+          <label><input type="checkbox" data-need><span>An adult or range officer was right there the whole time</span></label>
+          <label><input type="checkbox" data-need><span>Eye and ear protection were on</span></label>
+          <label><input type="checkbox" data-need><span>The muzzle stayed in a safe direction, finger off the trigger until ready to shoot</span></label>
+          <label><input type="checkbox" data-need><span>I'm sending this only to a friend's parent or guardian, and they agreed</span></label>
+        </div>${pinFields()}<p class="msg warn" id="shErr" hidden></p>
+        <div class="jr-row"><button class="go" id="shGo" disabled>Preparing…</button><button class="small" data-sheet="close">Cancel</button></div>${how}`)
+    : openSheet(`<span class="lbl">Share with a friend</span><h2>Send this string</h2><p class="sheet-sum">${sum}</p>
+        <p>Your friend gets the video with its times, so it can go on their Friends board and in their Film Room.</p>
+        <div class="jr-row"><button class="go" id="shGo" disabled>Preparing…</button><button class="small" data-sheet="close">Cancel</button></div>${how}`);
+  let blob = null;
+  try { blob = await buildShare(rec); } catch(e){ showMsg(s.querySelector("#shErr") || s.querySelector(".sheet-card").appendChild(Object.assign(document.createElement("p"), { className: "msg warn" })), "Couldn't prepare this video to share.", true); return; }
+  if (!s.isConnected) return;
+  const go = s.querySelector("#shGo"); go.disabled = false; go.textContent = rec.junior ? "Approve and share" : "Share";
+  go.onclick = () => {
+    if (rec.junior && !checkGrownUp(s)) return;
+    closeSheet(); deliver(blob, shareName(rec, t));
+  };
+}
+
+/* ---------- receiving ---------- */
+let fboard = store.get("fboard", []);
+const saveF = () => store.set("fboard", fboard);
+function fbQualifies(drillId, beepAuto, shots, beep){
+  const d = DRILLS[drillId];
+  return !!(d && beepAuto && shots && shots.length === d.shots && beep != null);
+}
+function fbOwn(r){
+  fboard = fboard.filter(e => e.id !== r.id);
+  if (!r.junior && r.live && r.beep && fbQualifies(r.drillId, r.beep.auto, r.shots, r.beep.t) && nameOk(r.name || "Shooter"))
+    fboard.push({ id: r.id, name: r.name || "Shooter", drillId: r.drillId, time: +(r.shots[r.shots.length - 1] - r.beep.t).toFixed(3), local: true });
+  saveF();
+}
+function fbRemove(id){ fboard = fboard.filter(e => e.id !== id); saveF(); }
+async function importFile(file){
+  let p = null;
+  try { p = await readShare(file); } catch(e){ p = null; }
+  if (!p){
+    openSheet(`<h2>No string data in this video</h2><p>This video doesn't carry Shot Dynamics times. It may have been shrunk when it was sent, or it wasn't shared from the app.</p>
+      <p class="hint">Ask your friend to send it again with Quick Share, Google Drive or email. You can still add times to it with Upload video.</p>
+      <div class="jr-row"><button class="go" id="shUp">Add times with Upload video</button><button class="small" data-sheet="close">Close</button></div>`);
+    $("#shUp").onclick = () => { closeSheet(); asUpload(file); };
+    return;
+  }
+  if (!p.ok){
+    openSheet(`<h2>This string was changed</h2><p>The video or its times were changed after it was shared, so it can't go on the Friends board.</p>
+      <div class="jr-row"><button class="go" id="shUp">Watch it with Upload video</button><button class="small" data-sheet="close">Close</button></div>`);
+    $("#shUp").onclick = () => { closeSheet(); asUpload(p.video); };
+    return;
+  }
+  const m = p.m, name = (n => n && nameOk(n) ? n : "Friend")(cleanName(m.name));
+  if (m.junior){
+    const s = openSheet(`<span class="lbl">Junior shooter · grown-up approval</span><h2>A junior's video from ${jh(name)}</h2>
+      <p>A grown-up on this phone must approve before a junior's video is added. It goes in the Film Room only, never on any board.</p>
+      <div class="jr-checks">
+        <label><input type="checkbox" data-need><span>I'm a parent or guardian on this phone</span></label>
+        <label><input type="checkbox" data-need><span>I agreed with ${jh(name)}'s family to share junior videos</span></label>
+      </div>${pinFields()}<p class="msg warn" id="shErr" hidden></p>
+      <div class="jr-row"><button class="go" id="shGo">Accept</button><button class="small" data-sheet="close">Don't add</button></div>`);
+    s.querySelector("#shGo").onclick = () => { if (!checkGrownUp(s)) return; closeSheet(); doImport(p, name); };
+    return;
+  }
+  doImport(p, name);
+}
+async function doImport(p, name){
+  const m = p.m;
+  let all = []; try { all = await DB.all(); } catch(e){}
+  if (all.some(r => !r.friend && r.id === m.id)){ toast("That's your own string. It's already on this phone."); return openFriends(); }
+  if (all.some(r => r.friend && r.origId === m.id && r.who === name)){ toast("You already added this string from " + name + "."); return openFriends(); }
+  const id = Date.now();
+  try {
+    await DB.put({ id, blob: p.video, ext: m.ext || "webm", beep: m.beep, beepAuto: !!m.beepAuto, shots: m.shots, who: name, drill: drillName(m.drillId), drillId: m.drillId || "",
+      junior: !!m.junior, friend: true, origId: m.id, sharedAt: m.at });
+  } catch(e){ toast("Couldn't add it. Phone storage may be full."); return; }
+  if (!m.junior && fbQualifies(m.drillId, m.beepAuto, m.shots, m.beep))
+    fboard.push({ id, name, drillId: m.drillId, time: +(m.shots[m.shots.length - 1] - m.beep).toFixed(3), local: false });
+  saveF();
+  /* keep the newest 30 friend strings, but never drop anyone's best board time */
+  const fr = all.filter(r => r.friend).sort((a, b) => b.id - a.id);
+  if (fr.length >= MAX_RUNS){ const keep = fbBestIds(); for (const old of fr.slice(MAX_RUNS - 1)) if (!keep.has(old.id)){ try { await DB.del(old.id); } catch(e){} fbRemove(old.id); } }
+  toast(m.junior ? "Junior video added to the Film Room" : "Added " + name + "'s string" + (DRILLS[m.drillId] ? " · " + drillName(m.drillId) : ""));
+  frDrill = DRILLS[m.drillId] ? m.drillId : frDrill;
+  openFriends();
+}
+function asUpload(blob){
+  const ext = /mp4/i.test(blob.type || "") ? "mp4" : "webm";
+  showView("live"); state.mode = "processing"; $("#btnStart").disabled = true; loadRun(blob, ext, false);
+}
+
+/* ---------- Friends screen ---------- */
+let frDrill = "bill";
+function fbBest(drillId){
+  const best = new Map();
+  fboard.filter(e => e.drillId === drillId).forEach(e => { const k = e.name.toLowerCase(); const c = best.get(k); if (!c || e.time < c.time) best.set(k, e); });
+  return [...best.values()].sort((a, b) => a.time - b.time);
+}
+function fbBestIds(){ const s = new Set(); Object.keys(DRILLS).forEach(d => fbBest(d).forEach(e => s.add(e.id))); return s; }
+async function renderFriends(){
+  document.querySelectorAll("[data-fdrill]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.fdrill === frDrill)));
+  const ol = $("#frList"); ol.textContent = "";
+  const list = fbBest(frDrill);
+  if (!list.length){ const li = document.createElement("li"); li.className = "ft-empty"; li.textContent = "No times yet for " + drillName(frDrill) + ". Shoot it on Live timer, or add a friend's string."; ol.appendChild(li); }
+  list.forEach((e, i) => {
+    const li = document.createElement("li"); if (i === 0) li.className = "top";
+    const pos = document.createElement("span"); pos.className = "pos"; pos.textContent = String(i + 1);
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = e.name + (e.local ? "" : " · friend");
+    const tm = document.createElement("span"); tm.className = "tm"; tm.textContent = fmt(e.time);
+    const b = document.createElement("button"); b.className = "small"; b.textContent = "Play";
+    b.setAttribute("aria-label", "Play video of " + e.name + ", " + fmt(e.time) + " seconds");
+    b.onclick = () => playFriend(e);
+    li.append(pos, nm, tm, b); ol.appendChild(li);
+  });
+  let all = []; try { all = await DB.all(); } catch(e){}
+  const names = new Map();
+  all.filter(r => r.friend).forEach(r => { const c = names.get(r.who) || { n: 0, jr: 0 }; c.n++; if (r.junior) c.jr++; names.set(r.who, c); });
+  const ul = $("#frNames"); ul.textContent = "";
+  if (!names.size){ const li = document.createElement("li"); li.innerHTML = '<span class="nm" style="color:var(--steel)">No friends yet. Add a string a friend shared with you.</span>'; ul.appendChild(li); }
+  names.forEach((c, who) => {
+    const li = document.createElement("li");
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = who;
+    const ct = document.createElement("span"); ct.className = "ct"; ct.textContent = c.n + (c.n === 1 ? " string" : " strings") + (c.jr ? " · " + c.jr + " junior" : "");
+    const del = document.createElement("button"); del.className = "small del"; del.textContent = "Remove";
+    del.onclick = async () => {
+      if (!del.classList.contains("arm")){ del.classList.add("arm"); del.textContent = "Remove all?"; setTimeout(() => { if (del.isConnected){ del.classList.remove("arm"); del.textContent = "Remove"; } }, 3000); return; }
+      for (const r of all.filter(r => r.friend && r.who === who)){ try { await DB.del(r.id); } catch(e){} fbRemove(r.id); }
+      toast("Removed " + who + "'s strings"); renderFriends();
+    };
+    li.append(nm, ct, del); ul.appendChild(li);
+  });
+  $("#friendsStatus").textContent = friendsStatusText(names);
+}
+function friendsStatusText(names){
+  const n = names ? names.size : new Set(fboard.filter(e => !e.local).map(e => e.name)).size;
+  return n ? n + (n === 1 ? " friend" : " friends") + " on your board" : "No friends added yet";
+}
+async function playFriend(e){
+  let rec = null; try { rec = await DB.get(e.id); } catch(err){}
+  if (!rec || !rec.blob){ toast("That video is no longer on this phone."); return; }
+  const v = $("#frVid"); if (v._url) URL.revokeObjectURL(v._url);
+  v._url = URL.createObjectURL(rec.blob);
+  v.onloadedmetadata = () => { try { v.currentTime = Math.max(0, rec.beep - 1); } catch(err){} v.play().catch(() => {}); };
+  v.src = v._url;
+  $("#frNow").textContent = e.name + " · " + drillName(e.drillId) + " · " + fmt(e.time) + " s";
+  $("#frPlayer").hidden = false;
+}
+$("#frClose").onclick = () => { const v = $("#frVid"); v.pause(); $("#frPlayer").hidden = true; };
+document.querySelectorAll("[data-fdrill]").forEach(b => b.onclick = () => { frDrill = b.dataset.fdrill; $("#frClose").onclick(); renderFriends(); });
+function openFriends(){ showView("friends"); renderFriends(); }
+$("#goFriends").onclick = () => requireSafety(
+  "Before you watch strings: unload, show clear, and holster or bench the firearm. Only pick up the phone with empty hands.",
+  openFriends
+);
+$("#friendIn").onchange = e => { const f = e.target.files && e.target.files[0]; e.target.value = ""; if (f) importFile(f); };
+$("#btnShare").onclick = async () => {
+  if (!run || !run.live) return;
+  clearTimeout(persistT); await persistRun(false);
+  let rec = null; try { rec = await DB.get(run.id); } catch(e){}
+  openShare(rec);
+};
+$("#friendsStatus").textContent = friendsStatusText();
+/* Junior switch on Live timer */
+const jrSw = $("#juniorSw");
+const syncJrSw = () => { jrSw.checked = !!settings.junior; $("#juniorLbl").classList.toggle("on", jrSw.checked); $("#shooterName").placeholder = jrSw.checked ? "Junior's first name" : "Your name"; };
+jrSw.onchange = () => { settings.junior = jrSw.checked; saveSettings(); syncJrSw(); };
+syncJrSw();
 refreshRunCount();
 syncSetupUI();
 $("#shooterName").value = settings.name || "";
 renderBoard();
 setModeUI();
 /* Test hook, only when the address ends in #test */
-if (location.hash === "#test") window.__stc = { loadRun: (b, ext, drill, name) => { lastDrill = drill || ""; lastName = name || ""; return loadRun(b, ext, true); }, DB,
+if (location.hash === "#test") window.__stc = { buildShare, importFile, readShare, loadRun: (b, ext, drill, name) => { lastDrill = drill || ""; lastName = name || ""; lastJunior = !!settings.junior; return loadRun(b, ext, true); }, DB,
   loadMatchRun: (b, ext) => { lastTurn = currentTurn(); lastParRec = match ? match.par : 0; return loadRun(b, ext, true); } };
 })();
 </script>
