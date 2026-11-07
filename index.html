@@ -327,6 +327,12 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .fam-msg video{width:100%;max-width:100%;max-height:60vh;border-radius:10px;background:#000}
 .fam-form textarea{min-height:5.5em;resize:vertical;font:inherit}
 .fam-members{display:flex;flex-wrap:wrap;gap:6px}
+/* worldwide leaderboard teaser */
+.world{border-color:var(--steel)}
+.world-badge{font-family:var(--f-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.7rem;padding:4px 10px;border-radius:99px;background:var(--chrome);color:#121417;border:1px solid #9aa0a8;white-space:nowrap}
+.world-lead{margin:0;color:var(--white);font-size:1.1rem;font-weight:600;text-wrap:balance}
+.world-list{margin:0;padding-left:1.2em;display:flex;flex-direction:column;gap:6px;color:var(--silver)}
+.world-list b{color:var(--white)}
 /* menu hero: photo behind the menu */
 html{background:var(--bg)}
 html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!important}
@@ -465,6 +471,16 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
         <video id="ftVid" controls playsinline preload="auto"></video>
       </div>
       <p class="hint">Times only: draw and fire, from the beep to the last shot. Only live strings recorded in this app, with the start beep and every shot of the drill heard, are counted. The top 5 keep their video.</p>
+    </div>
+    <div class="panel world" aria-labelledby="worldH">
+      <div class="tools"><h2 class="grow" id="worldH">Worldwide leaderboard</h2><span class="world-badge">Coming with Pro</span></div>
+      <p class="world-lead">See how you stack up against the rest of the world.</p>
+      <ul class="world-list">
+        <li><b>Top 5</b> for each drill: video posted, so everyone can watch the run.</li>
+        <li><b>Next 20</b>: names and times.</li>
+        <li>Bill Drill, Mozambique, El Presidente and FAST.</li>
+      </ul>
+      <p class="hint">Same fair rules as Fastest times: live strings recorded in Shot Dynamics, start beep and every shot heard, times only. Family-friendly names. Junior shooters never appear.</p>
     </div>
   </section>
 
