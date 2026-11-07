@@ -317,6 +317,15 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .jr-switch{padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel);color:var(--white);align-items:flex-start}
 .jr-switch input{margin-top:1px;flex:none}
 .jr-switch.on{border-color:var(--silver)}
+/* ---------- Junior family cheering section ---------- */
+.fam-msgs{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+.fam-msg{border:1px solid var(--line);border-left:3px solid var(--silver);border-radius:0 12px 12px 0;background:var(--panel-2);padding:12px 14px;display:flex;flex-direction:column;gap:8px}
+.fam-from{font-family:var(--f-display);font-weight:700;letter-spacing:.12em;text-transform:uppercase;font-size:.8rem;color:var(--white);display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap}
+.fam-from span{color:var(--steel);font-weight:500}
+.fam-text{margin:0;color:var(--white);font-size:1.05rem;overflow-wrap:anywhere;white-space:pre-wrap}
+.fam-msg video{width:100%;max-width:100%;max-height:60vh;border-radius:10px;background:#000}
+.fam-form textarea{min-height:5.5em;resize:vertical;font:inherit}
+.fam-members{display:flex;flex-wrap:wrap;gap:6px}
 </style>
 </head>
 <body>
@@ -326,7 +335,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
   <header>
     <div class="brand">Shot Dynamics<small>Timer · Splits · Draws</small></div>
     <div class="hdr-btns">
-      <button id="btnMenu" class="small locked" inert hidden>Menu</button>
+      <button id="btnMenu" class="small locked" inert hidden aria-label="Home">‹ Home</button>
       <button id="btnSettings" class="small locked" inert aria-expanded="false" aria-controls="settings">Settings</button>
     </div>
   </header>
@@ -472,7 +481,7 @@ button,label.file{-webkit-tap-highlight-color:transparent}
       <label class="lbl" for="shooterName">Shooter name · for Fastest times</label>
       <input class="txt" id="shooterName" maxlength="20" placeholder="Your name" autocomplete="nickname">
       <p class="msg warn" id="nameErr" hidden></p>
-      <label class="check jr-switch" id="juniorLbl"><input type="checkbox" id="juniorSw"><span>Junior shooter · keeps this string off Fastest times and the Friends board. Sharing it needs a grown-up's PIN.</span></label>
+      <label class="check jr-switch" id="juniorLbl"><input type="checkbox" id="juniorSw"><span>Junior shooter · keeps this string off Fastest times. It goes on the Junior group top 3 in Friends instead. Sharing it needs a grown-up's PIN.</span></label>
     </div>
 
     <div class="panel setup">
@@ -704,7 +713,12 @@ button,label.file{-webkit-tap-highlight-color:transparent}
         <div class="tools"><span class="grow ft-now" id="frNow"></span><button class="small" id="frClose">Close</button></div>
         <video id="frVid" controls playsinline preload="auto"></video>
       </div>
-      <p class="hint">Same rules as Fastest times: only live strings recorded in Shot Dynamics, start beep heard, every shot of the drill counted. Times only, draw and fire. Junior strings never appear here.</p>
+      <p class="hint">Same rules as Fastest times: only live strings recorded in Shot Dynamics, start beep heard, every shot of the drill counted. Times only, draw and fire. Junior strings have their own top 3 below.</p>
+    </div>
+    <div class="panel fastest">
+      <div class="tools"><h2 class="grow">Junior group · top 3</h2><span class="hint" id="frJrDrill">Bill Drill</span></div>
+      <ol class="ft-list" id="frJrList"></ol>
+      <p class="hint">Only juniors on this phone and junior strings a parent here accepted from approved families. A faster time bumps the slowest of the three. Never shared beyond your group, and never on Fastest times.</p>
     </div>
     <div class="panel">
       <h2>Friends on this phone</h2>
@@ -2557,6 +2571,7 @@ jrRender = function(){
 $("#kids").addEventListener("click", e => {
   const b = e.target.closest('[data-act="doremove"]'); if (!b) return;
   if (jr.pin && $("#jrPin").value.trim() !== jr.pin) return showMsg($("#jrPinErr"), "That PIN isn't right.", true);
+  const gone = jr.cur; FamDB.all().then(ms => ms.filter(m => m.kidId === gone).forEach(m => FamDB.del(m.id))).catch(() => {});
   jr.kids = jr.kids.filter(x => x.id !== jr.cur); jr.cur = jr.kids.length ? jr.kids[0].id : null; jrSave();
   jrView = { v: "home" }; jrRender();
 });
@@ -2565,6 +2580,157 @@ $("#goKids").onclick = () => requireSafety(
   () => { jrView = { v: "home" }; showView("kids"); jrRender(); }
 );
 $("#kidsStatus").textContent = jrStatusText();
+/* ---------- Junior family cheering section ----------
+   Notes and short videos (5 s max) from up to 4 parent-approved family members.
+   The parent adds each one with their PIN; everything stays on this phone. */
+const FAM_MAX = 4, FAM_SECS = 5;
+const FamDB = (() => {
+  let dbp = null;
+  const open = () => dbp || (dbp = new Promise((res, rej) => {
+    let r; try { r = indexedDB.open("shotdyn-family", 1); } catch(e){ rej(e); return; }
+    r.onupgradeneeded = () => r.result.createObjectStore("msgs", { keyPath: "id" });
+    r.onsuccess = () => res(r.result); r.onerror = () => rej(r.error);
+  }));
+  const tx = async (mode, fn) => { const db = await open(); return new Promise((res, rej) => { const t = db.transaction("msgs", mode); const st = t.objectStore("msgs"); const out = fn(st); t.oncomplete = () => res(out && out.result); t.onerror = () => rej(t.error); }); };
+  return { put: m => tx("readwrite", st => st.put(m)), del: id => tx("readwrite", st => st.delete(id)), all: () => tx("readonly", st => st.getAll()) };
+})();
+const msgOk = t => String(t || "").split(/\s+/).every(w => !w || nameOk(w));
+let famCache = [];
+const FAM_WORDS = ["Great job!", "You're really improving!", "So proud of you!", "Safe and steady. Nice work!", "Keep practicing, you've got this!", "Awesome shooting today!"];
+function jrFamPanel(k){
+  return `<div class="panel"><div class="tools"><h2 class="grow">Words of encouragement</h2><button class="small" data-act="fam">+ Add</button></div>
+    <ul class="fam-msgs" id="famList"><li class="hint">Loading…</li></ul>
+    <div class="jr-row" id="famMore" hidden><button class="small" data-act="famall">See all messages and videos</button></div>
+    <p class="hint">Approved family can leave positive words and short videos (${FAM_SECS} seconds or less). A parent or guardian approves every one, and nothing leaves this phone.</p></div>`;
+}
+async function jrFamLoad(k, compact){
+  const ul = $("#famList"); if (!ul) return;
+  let msgs = []; try { msgs = (await FamDB.all()).filter(m => m.kidId === k.id).sort((a, b) => b.at - a.at); } catch(e){}
+  famCache.forEach(u => URL.revokeObjectURL(u)); famCache = [];
+  ul.textContent = "";
+  if (!msgs.length){ const li = document.createElement("li"); li.className = "hint"; li.textContent = "No words of encouragement yet. A grown-up can add one from approved family."; ul.appendChild(li); return; }
+  if (compact){ const more = $("#famMore"); if (more){ more.hidden = false; more.firstElementChild.textContent = "See all " + msgs.length + (msgs.length === 1 ? " message" : " messages") + (msgs.some(m => m.blob) ? " and videos" : ""); } }
+  (compact ? msgs.slice(0, 1) : msgs).forEach(m => {
+    const li = document.createElement("li"); li.className = "fam-msg";
+    const from = document.createElement("div"); from.className = "fam-from";
+    const who = document.createElement("b"); who.textContent = "From " + m.from;
+    const when = document.createElement("span"); when.textContent = new Date(m.at).toLocaleDateString();
+    from.append(who, when); li.appendChild(from);
+    if (m.text){ const p = document.createElement("p"); p.className = "fam-text"; p.textContent = m.text; li.appendChild(p); }
+    if (m.blob && compact){ const t = document.createElement("span"); t.className = "hint"; t.textContent = "Has a video. Tap See all to watch."; li.appendChild(t); }
+    else if (m.blob){ const v = document.createElement("video"); v.controls = true; v.playsInline = true; v.preload = "metadata"; const u = URL.createObjectURL(m.blob); famCache.push(u); v.src = u; li.appendChild(v); }
+    if (!compact){ const rm = document.createElement("button"); rm.className = "small"; rm.textContent = "Remove"; rm.dataset.act = "famdel"; rm.dataset.id = m.id;
+      rm.style.alignSelf = "flex-start"; li.appendChild(rm); }
+    ul.appendChild(li);
+  });
+}
+const videoSecs = blob => new Promise(res => {
+  const v = document.createElement("video"); v.preload = "metadata"; v.muted = true;
+  const u = URL.createObjectURL(blob); let done = false;
+  const fin = d => { if (done) return; done = true; URL.revokeObjectURL(u); res(d); };
+  v.onloadedmetadata = () => {
+    if (isFinite(v.duration)) return fin(v.duration);
+    v.ontimeupdate = () => { v.ontimeupdate = null; fin(v.duration); }; v.currentTime = 1e6;   // webm without duration
+  };
+  v.onerror = () => fin(NaN); setTimeout(() => fin(NaN), 8000); v.src = u;
+});
+function jrFamForm(k){
+  const fam = k.family || [];
+  return `<div class="jr-row"><button class="small" data-act="home">‹ Back to levels</button></div>
+    <div class="jr-card fam-form"><span class="lbl">For the grown-up</span><h2>Words of encouragement for ${jh(k.name)}</h2>
+    <p>Add positive words, a short video, or both, from approved family. You approve it here before ${jh(k.name)} sees it.</p>
+    <div class="field"><label class="lbl" for="famFrom">From</label>
+      ${fam.length ? `<div class="fam-members">${fam.map(f => `<button class="small" data-act="famwho" data-name="${jh(f.name)}">${jh(f.name)}</button>`).join("")}</div>` : ""}
+      <input class="txt" id="famFrom" maxlength="20" autocomplete="off" placeholder="Family member's name">
+      <p class="hint">${fam.length >= FAM_MAX ? "This junior has " + FAM_MAX + " family members, the most allowed. Pick one above." : "Up to " + FAM_MAX + " family members per junior."}</p></div>
+    <div class="field"><span class="lbl">Words (pick one, optional)</span>
+      <div class="fam-members" role="group" aria-label="Words of encouragement">${FAM_WORDS.map(w => `<button class="small" data-act="famword" aria-pressed="false">${jh(w)}</button>`).join("")}</div></div>
+    <div class="field"><span class="lbl">Video (optional, ${FAM_SECS} seconds or less)</span>
+      <label class="small file" style="align-self:flex-start">Choose video<input type="file" id="famVid" accept="video/*"></label>
+      <p class="hint" id="famVidInfo">Family can record a short clip on their own phone and text or email it to you.</p></div>
+    <div class="jr-checks"><label><input type="checkbox" id="famOk"><span>I'm ${jh(k.name)}'s parent or guardian, I know who sent this, and I approve it for ${jh(k.name)}.</span></label></div>
+    ${jr.pin ? '<div class="jr-row"><input class="jr-pin" id="jrPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Grown-up PIN" placeholder="••••"></div>'
+      : '<p>Create a 4-digit grown-up PIN for this phone.</p><div class="jr-row"><input class="jr-pin" id="jrPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="New PIN" placeholder="••••"><input class="jr-pin" id="jrPin2" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Repeat PIN" placeholder="••••"></div>'}
+    <p class="msg warn" id="famErr" hidden></p>
+    <button class="go" data-act="famsave">Approve and add</button></div>`;
+}
+let famVid = null;
+function famPinOk(errEl){
+  const p = ($("#jrPin") || {}).value; const v = (p || "").trim();
+  if (!jr.pin){
+    if (!/^\d{4}$/.test(v)){ showMsg(errEl, "Choose a PIN of exactly 4 numbers.", true); return false; }
+    if (v !== $("#jrPin2").value.trim()){ showMsg(errEl, "The two PINs don't match.", true); return false; }
+    jr.pin = v; jrSave(); return true;
+  }
+  if (v !== jr.pin){ showMsg(errEl, "That PIN isn't right.", true); return false; }
+  return true;
+}
+{
+  const base = jrRender;
+  jrRender = function(){
+    const k = jrKid();
+    if (k && jrView.v === "fam"){ famVid = null; $("#kids").innerHTML = jrFamForm(k); window.scrollTo({ top: 0 }); return; }
+    if (k && jrView.v === "famall"){
+      $("#kids").innerHTML = `<div class="jr-row"><button class="small" data-act="home">‹ Back to levels</button><button class="small" data-act="fam">+ Add</button></div>
+        <div class="panel"><h2>Words of encouragement for ${jh(k.name)}</h2><ul class="fam-msgs" id="famList"></ul></div>`;
+      window.scrollTo({ top: 0 }); jrFamLoad(k, false); return;
+    }
+    if (k && jrView.v === "famdel"){
+      $("#kids").innerHTML = `<div class="jr-card"><h2>Remove this message?</h2><p>It will be deleted from ${jh(k.name)}'s words of encouragement.</p>
+        <div class="jr-row"><input class="jr-pin" id="jrPin" inputmode="numeric" maxlength="4" autocomplete="off" aria-label="Grown-up PIN" placeholder="••••"></div>
+        <p class="msg warn" id="famErr" hidden></p>
+        <div class="jr-row"><button class="go stop" data-act="famdeldo">Remove</button><button class="small" data-act="home">Cancel</button></div></div>`;
+      return;
+    }
+    base();
+    if (k && (jrView.v === "home" || !jrView.v) && $("#kids .jr-hero")){
+      $("#kids .jr-hero").insertAdjacentHTML("afterend", jrFamPanel(k));
+      jrFamLoad(k, true);
+    }
+  };
+}
+$("#kids").addEventListener("change", async e => {
+  if (e.target.id !== "famVid") return;
+  const f = e.target.files && e.target.files[0]; famVid = null;
+  const info = $("#famVidInfo");
+  if (!f) return;
+  const secs = await videoSecs(f);
+  if (!isFinite(secs)){ info.textContent = "Couldn't read that video. Try a different file."; return; }
+  if (secs > FAM_SECS + 0.5){ info.textContent = "That video is " + secs.toFixed(1) + " seconds. Please trim it to " + FAM_SECS + " seconds or less on the phone, then choose it again."; e.target.value = ""; return; }
+  famVid = f; info.textContent = "Video ready · " + secs.toFixed(1) + " seconds";
+});
+$("#kids").addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]"); if (!b || b.disabled) return;
+  const act = b.dataset.act, k = jrKid(); if (!k) return;
+  if (act === "fam"){ jrView = { v: "fam" }; return jrRender(); }
+  if (act === "famwho"){ $("#famFrom").value = b.dataset.name; return; }
+  if (act === "famword"){ const on = b.getAttribute("aria-pressed") !== "true"; $("#kids").querySelectorAll("[data-act=famword]").forEach(x => x.setAttribute("aria-pressed", "false")); b.setAttribute("aria-pressed", String(on)); return; }
+  if (act === "famall"){ jrView = { v: "famall" }; return jrRender(); }
+  if (act === "famdel"){ jrView = { v: "famdel", id: +b.dataset.id }; return jrRender(); }
+  if (act === "famdeldo"){
+    if (!jr.pin || $("#jrPin").value.trim() !== jr.pin) return showMsg($("#famErr"), "That PIN isn't right.", true);
+    try { await FamDB.del(jrView.id); } catch(err){}
+    toast("Message removed"); jrView = { v: "famall" }; return jrRender();
+  }
+  if (act === "famsave"){
+    const err = $("#famErr");
+    const sel = $("#kids [data-act=famword][aria-pressed=true]"), from = cleanName($("#famFrom").value), text = sel ? sel.textContent : "";
+    k.family = k.family || [];
+    const known = k.family.find(f => f.name.toLowerCase() === from.toLowerCase());
+    if (!from) return showMsg(err, "Who is it from? Type their name.", true);
+    if (!nameOk(from)) return showMsg(err, "That name isn't allowed. Please keep it family-friendly.", true);
+    if (!known && k.family.length >= FAM_MAX) return showMsg(err, "Only " + FAM_MAX + " family members per junior. Pick one of the names above.", true);
+    if (!text && !famVid) return showMsg(err, "Pick some words, add a video, or both.", true);
+    if (text && !msgOk(text)) return showMsg(err, "Please keep the note family-friendly.", true);
+    if (!$("#famOk").checked) return showMsg(err, "Please check the box to approve it.", true);
+    if (!famPinOk(err)) return;
+    if (!known) k.family.push({ id: Date.now(), name: from });
+    jrSave();
+    try { await FamDB.put({ id: Date.now(), kidId: k.id, from: known ? known.name : from, text, blob: famVid || null, at: Date.now() }); }
+    catch(x){ return showMsg(err, "Couldn't save it. Phone storage may be full.", true); }
+    famVid = null; toast("Message added for " + k.name); jrView = { v: "home" }; return jrRender();
+  }
+});
 /* ---------- Friends: share strings phone to phone ----------
    A shared string is the original video with its run data (beep, shots, drill, name) and a
    check value added to the end of the file. The receiving app reads that data, checks it,
@@ -2644,7 +2810,7 @@ async function openShare(rec){
   const how = '<p class="hint">Send it with <b>Quick Share, Google Drive or email</b> so the original file arrives. Your friend adds it in <b>Friends → Add a friend\'s string</b>.</p>';
   const s = rec.junior
     ? openSheet(`<span class="lbl">Junior shooter · grown-up approval</span><h2>Share a junior's video</h2><p class="sheet-sum">${sum}</p>
-        <p>Junior videos go only to a friend's family, and only when a grown-up on both phones approves. Never post them publicly.</p>
+        <p>Junior videos go only to an approved friend's or troop family, and only when a grown-up on both phones approves. Never post them publicly.</p>
         <div class="jr-checks">
           <label><input type="checkbox" data-need><span>An adult or range officer was right there the whole time</span></label>
           <label><input type="checkbox" data-need><span>Eye and ear protection were on</span></label>
@@ -2674,8 +2840,8 @@ function fbQualifies(drillId, beepAuto, shots, beep){
 }
 function fbOwn(r){
   fboard = fboard.filter(e => e.id !== r.id);
-  if (!r.junior && r.live && r.beep && fbQualifies(r.drillId, r.beep.auto, r.shots, r.beep.t) && nameOk(r.name || "Shooter"))
-    fboard.push({ id: r.id, name: r.name || "Shooter", drillId: r.drillId, time: +(r.shots[r.shots.length - 1] - r.beep.t).toFixed(3), local: true });
+  if (r.live && r.beep && fbQualifies(r.drillId, r.beep.auto, r.shots, r.beep.t) && nameOk(r.name || "Shooter"))
+    fboard.push({ id: r.id, name: r.name || (r.junior ? "Junior" : "Shooter"), drillId: r.drillId, time: +(r.shots[r.shots.length - 1] - r.beep.t).toFixed(3), local: true, junior: !!r.junior });
   saveF();
 }
 function fbRemove(id){ fboard = fboard.filter(e => e.id !== id); saveF(); }
@@ -2698,7 +2864,7 @@ async function importFile(file){
   const m = p.m, name = (n => n && nameOk(n) ? n : "Friend")(cleanName(m.name));
   if (m.junior){
     const s = openSheet(`<span class="lbl">Junior shooter · grown-up approval</span><h2>A junior's video from ${jh(name)}</h2>
-      <p>A grown-up on this phone must approve before a junior's video is added. It goes in the Film Room only, never on any board.</p>
+      <p>A grown-up on this phone must approve before a junior's video is added. It goes in the Film Room and the Junior group top 3 on this phone, never on Fastest times or the Friends board.</p>
       <div class="jr-checks">
         <label><input type="checkbox" data-need><span>I'm a parent or guardian on this phone</span></label>
         <label><input type="checkbox" data-need><span>I agreed with ${jh(name)}'s family to share junior videos</span></label>
@@ -2719,13 +2885,13 @@ async function doImport(p, name){
     await DB.put({ id, blob: p.video, ext: m.ext || "webm", beep: m.beep, beepAuto: !!m.beepAuto, shots: m.shots, who: name, drill: drillName(m.drillId), drillId: m.drillId || "",
       junior: !!m.junior, friend: true, origId: m.id, sharedAt: m.at });
   } catch(e){ toast("Couldn't add it. Phone storage may be full."); return; }
-  if (!m.junior && fbQualifies(m.drillId, m.beepAuto, m.shots, m.beep))
-    fboard.push({ id, name, drillId: m.drillId, time: +(m.shots[m.shots.length - 1] - m.beep).toFixed(3), local: false });
+  if (fbQualifies(m.drillId, m.beepAuto, m.shots, m.beep))
+    fboard.push({ id, name, drillId: m.drillId, time: +(m.shots[m.shots.length - 1] - m.beep).toFixed(3), local: false, junior: !!m.junior });
   saveF();
   /* keep the newest 30 friend strings, but never drop anyone's best board time */
   const fr = all.filter(r => r.friend).sort((a, b) => b.id - a.id);
   if (fr.length >= MAX_RUNS){ const keep = fbBestIds(); for (const old of fr.slice(MAX_RUNS - 1)) if (!keep.has(old.id)){ try { await DB.del(old.id); } catch(e){} fbRemove(old.id); } }
-  toast(m.junior ? "Junior video added to the Film Room" : "Added " + name + "'s string" + (DRILLS[m.drillId] ? " · " + drillName(m.drillId) : ""));
+  toast(m.junior ? "Junior string added to the Film Room and Junior group" : "Added " + name + "'s string" + (DRILLS[m.drillId] ? " · " + drillName(m.drillId) : ""));
   frDrill = DRILLS[m.drillId] ? m.drillId : frDrill;
   openFriends();
 }
@@ -2736,12 +2902,29 @@ function asUpload(blob){
 
 /* ---------- Friends screen ---------- */
 let frDrill = "bill";
-function fbBest(drillId){
+function fbBest(drillId, junior){
   const best = new Map();
-  fboard.filter(e => e.drillId === drillId).forEach(e => { const k = e.name.toLowerCase(); const c = best.get(k); if (!c || e.time < c.time) best.set(k, e); });
+  fboard.filter(e => e.drillId === drillId && !!e.junior === !!junior).forEach(e => { const k = e.name.toLowerCase(); const c = best.get(k); if (!c || e.time < c.time) best.set(k, e); });
   return [...best.values()].sort((a, b) => a.time - b.time);
 }
-function fbBestIds(){ const s = new Set(); Object.keys(DRILLS).forEach(d => fbBest(d).forEach(e => s.add(e.id))); return s; }
+function fbBestIds(){ const s = new Set(); Object.keys(DRILLS).forEach(d => { fbBest(d).forEach(e => s.add(e.id)); fbBest(d, true).slice(0, JR_TOP).forEach(e => s.add(e.id)); }); return s; }
+const JR_TOP = 3;
+function renderJrBoard(){
+  const ol = $("#frJrList"); ol.textContent = "";
+  const list = fbBest(frDrill, true).slice(0, JR_TOP);
+  $("#frJrDrill").textContent = drillName(frDrill);
+  if (!list.length){ const li = document.createElement("li"); li.className = "ft-empty"; li.textContent = "No junior times yet for " + drillName(frDrill) + ". Turn on Junior shooter on Live timer, or accept a junior string a friend's family shared."; ol.appendChild(li); return; }
+  list.forEach((e, i) => {
+    const li = document.createElement("li"); li.className = "top";
+    const pos = document.createElement("span"); pos.className = "pos"; pos.textContent = String(i + 1);
+    const nm = document.createElement("span"); nm.className = "nm"; nm.textContent = e.name;
+    const tm = document.createElement("span"); tm.className = "tm"; tm.textContent = fmt(e.time);
+    const b = document.createElement("button"); b.className = "small"; b.textContent = "Play";
+    b.setAttribute("aria-label", "Play video of " + e.name + ", " + fmt(e.time) + " seconds");
+    b.onclick = () => playFriend(e);
+    li.append(pos, nm, tm, b); ol.appendChild(li);
+  });
+}
 async function renderFriends(){
   document.querySelectorAll("[data-fdrill]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.fdrill === frDrill)));
   const ol = $("#frList"); ol.textContent = "";
@@ -2757,6 +2940,7 @@ async function renderFriends(){
     b.onclick = () => playFriend(e);
     li.append(pos, nm, tm, b); ol.appendChild(li);
   });
+  renderJrBoard();
   let all = []; try { all = await DB.all(); } catch(e){}
   const names = new Map();
   all.filter(r => r.friend).forEach(r => { const c = names.get(r.who) || { n: 0, jr: 0 }; c.n++; if (r.junior) c.jr++; names.set(r.who, c); });
