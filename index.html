@@ -338,6 +338,20 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .nb-q .nb-seg input:checked + span{background:var(--chrome);color:#121417;border-color:#9aa0a8}
 .nb-q .nb-seg input:focus-visible + span{outline:2px solid var(--silver);outline-offset:2px}
 .nb-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px;color:var(--white)}
+/* rounds in a row */
+.set-sum{border-color:var(--steel)}
+.set-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
+.set-stats .lbl{white-space:nowrap}
+.set-stats div{display:flex;flex-direction:column;gap:2px;padding:10px 12px;border:1px solid var(--line);border-radius:10px;background:var(--panel-2)}
+.set-stats b{font-family:var(--f-digits);font-size:1.5rem;color:var(--white)}
+.set-list{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;border:1px solid var(--line);border-radius:12px;overflow:hidden}
+.set-list li{display:grid;grid-template-columns:auto auto 1fr auto;gap:10px;align-items:center;padding:8px 10px;border-top:1px solid var(--line)}
+.set-list li:first-child{border-top:0}
+.set-list .n{font-family:var(--f-display);font-weight:700;letter-spacing:.1em;text-transform:uppercase;font-size:.78rem;color:var(--steel)}
+.set-list .tm{font-family:var(--f-digits);font-size:1.15rem;color:var(--white)}
+.set-list .tm.best{color:#fff;text-shadow:0 0 8px rgba(255,255,255,.35)}
+.set-list .note{color:var(--steel);font-size:.82rem;min-width:0}
+.set-vid{width:100%;max-width:100%;border-radius:10px;background:#000}
 /* worldwide leaderboard teaser */
 .world{border-color:var(--steel)}
 .world-badge{font-family:var(--f-display);font-weight:700;letter-spacing:.14em;text-transform:uppercase;font-size:.7rem;padding:4px 10px;border-radius:99px;background:var(--chrome);color:#121417;border:1px solid #9aa0a8;white-space:nowrap}
@@ -558,9 +572,28 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
             <button class="small" data-adj="par" data-d="1" aria-label="Longer time limit">+</button>
           </div>
         </div>
+        <div class="field">
+          <span class="lbl" id="liveRoundsLbl">Rounds in a row</span>
+          <div class="stepper" role="group" aria-labelledby="liveRoundsLbl">
+            <button class="small" data-adj="rounds" data-d="-1" aria-label="Fewer rounds">−</button>
+            <output class="step-val" data-show="rounds">1</output>
+            <button class="small" data-adj="rounds" data-d="1" aria-label="More rounds">+</button>
+          </div>
+        </div>
+        <div class="field" id="resetField">
+          <span class="lbl" id="liveResetLbl">Reset time</span>
+          <div class="stepper" role="group" aria-labelledby="liveResetLbl">
+            <button class="small" data-adj="reset" data-d="-1" aria-label="Shorter reset time">−</button>
+            <output class="step-val" data-show="reset">15 s</output>
+            <button class="small" data-adj="reset" data-d="1" aria-label="Longer reset time">+</button>
+          </div>
+        </div>
       </div>
       <p class="hint" data-show="setupHint"></p>
+      <p class="hint" id="roundsHint" hidden></p>
     </div>
+
+    <div class="panel set-sum" id="setSum" hidden></div>
 
     <div class="controls">
       <button id="btnStart" class="go">Start</button>
@@ -821,7 +854,7 @@ const store = {
   set(k, v){ try { localStorage.setItem("stc." + k, JSON.stringify(v)); } catch(e){} }
 };
 const BEEP_HZ = 2700, BEEP_DUR = 0.35, LOCK_MS = 70;
-const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0, drill: "custom" }, store.get("settings", {}));
+const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0, drill: "custom", rounds: 1, resetSec: 15 }, store.get("settings", {}));
 const saveSettings = () => store.set("settings", settings);
 const thrLin = () => Math.pow(10, settings.thrDb / 20);
 
@@ -884,6 +917,7 @@ let view = "menu";
 function showView(name){
   if (name !== "compare" && typeof cmpPause === "function") cmpPause();
   if (name !== "review" && typeof pv !== "undefined" && pv) pv.pause();
+  if (name !== "live" && typeof set !== "undefined" && set && !set.done && state.mode === "reset") endSet(true);
   ["menu", "live", "review", "compare", "h2h", "kids", "friends", "newbie"].forEach(v => { $("#" + v).hidden = v !== name; });
   document.documentElement.classList.toggle("on-menu", name === "menu");
   $("#btnMenu").hidden = name === "menu";
@@ -986,10 +1020,19 @@ function syncSetupUI(){
   parts.push(settings.shots ? "Counts " + (settings.shots === 1 ? "1 shot" : settings.shots + " shots") + ", and a live string stops after the last one" : "Counts every shot");
   parts.push(settings.par ? "two short beeps at " + settings.par.toFixed(1) + " s mean time's up, and later shots are flagged late" : "no time limit");
   document.querySelectorAll('[data-show="setupHint"]').forEach(el => { el.textContent = pre + parts.join("; ") + "."; });
+  const R = settings.rounds || 1, RS = settings.resetSec || 15;
+  document.querySelectorAll('[data-show="rounds"]').forEach(el => { el.textContent = String(R); });
+  document.querySelectorAll('[data-show="reset"]').forEach(el => { el.textContent = RS + " s"; });
+  const rf = $("#resetField"); if (rf) rf.hidden = R < 2;
+  const rh = $("#roundsHint"); if (rh){ rh.hidden = R < 2;
+    rh.textContent = "Runs " + R + " rounds in a row with one tap of Start. After each round you get " + RS + " s to reset safely: finger off the trigger, reholster carefully or come back to the ready position. Three short ready beeps, then the random delay and the start beep. Every round is saved, and you see all " + R + " at the end."; }
 }
+const RESET_STEPS = [10, 15, 20, 30, 45, 60];
 document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => {
   const d = Number(b.dataset.d);
   if (b.dataset.adj === "shots"){ settings.shots = Math.max(0, Math.min(30, settings.shots + d)); settings.drill = "custom"; }
+  else if (b.dataset.adj === "rounds"){ settings.rounds = Math.max(1, Math.min(10, (settings.rounds || 1) + d)); }
+  else if (b.dataset.adj === "reset"){ let i = RESET_STEPS.indexOf(settings.resetSec || 15); if (i < 0) i = 1; settings.resetSec = RESET_STEPS[Math.max(0, Math.min(RESET_STEPS.length - 1, i + d))]; }
   else {
     let i = PAR_STEPS.indexOf(settings.par); if (i < 0) i = 0;
     settings.par = PAR_STEPS[Math.max(0, Math.min(PAR_STEPS.length - 1, i + d))];
@@ -1131,6 +1174,7 @@ function camError(e){
 $("#btnCam").onclick = async () => { try { await ensureCamera(); } catch(e){ camError(e); } };
 
 function setFace(lbl, time, splitLbl, split, shots){
+  if (set && !set.done) lbl += " · Round " + set.n + "/" + set.total;
   $("#faceLbl").textContent = lbl; $("#faceTime").textContent = time;
   $("#faceSplitLbl").textContent = splitLbl; $("#faceSplit").textContent = split; $("#faceShots").textContent = shots;
 }
@@ -1217,7 +1261,7 @@ function stopRun(){
   if (s.length) setFace("Time", fmt(s[s.length - 1] - live.beepAt), s.length === 1 ? "Draw" : "Split",
     fmt(s.length === 1 ? s[0] - live.beepAt : s[s.length - 1] - s[s.length - 2]), "Shots " + s.length);
   live = null;
-  releaseWake();
+  if (!(set && !set.done)) releaseWake();
   state.mode = "processing";
   $("#btnStart").textContent = "Working…"; $("#btnStart").disabled = true; $("#btnStart").classList.remove("stop");
   $("#recDot").hidden = true;
@@ -1234,9 +1278,94 @@ function onRecStop(){
   const type = (rec && rec.mimeType) || "video/webm";
   const blob = new Blob(chunks, { type });
   chunks = [];
+  if (set && !set.done){ setRoundDone(blob, type.includes("mp4") ? "mp4" : "webm"); return; }
   loadRun(blob, type.includes("mp4") ? "mp4" : "webm", true);
 }
-$("#btnStart").onclick = () => { if (state.mode === "idle") startRun(); else if (state.mode === "live") stopRun(); };
+$("#btnStart").onclick = () => {
+  if (state.mode === "reset"){ endSet(true); return; }
+  if (state.mode === "idle"){
+    const solo = !(h2hArmed && match && match.status === "live");
+    $("#setSum").hidden = true;
+    set = solo && (settings.rounds || 1) > 1 ? { total: settings.rounds, n: 1, recs: [], done: false, timers: [] } : null;
+    startRun();
+  }
+  else if (state.mode === "live"){ if (set && !set.done) set.stopAfter = true; stopRun(); }
+};
+
+/* ---------- rounds in a row (Solo Training) ----------
+   One tap runs N rounds: each round is saved quietly, then a safe reset countdown,
+   three ready beeps, and the next round starts with its own random delay and beep. */
+let set = null;
+const READY_HZ = 1200;
+async function setRoundDone(blob, ext){
+  $("#btnStart").textContent = "Saving round " + set.n + "…";
+  const r = await loadRun(blob, ext, true, true);
+  if (!set) return;
+  if (r) set.recs.push({ id: r.id, blob: r.blob, ext: r.ext, beep: r.beep.t, shots: r.shots.slice(), par: r.parRec || 0, need: runCfg().shots || 0 });
+  else set.recs.push(null);
+  if (set.stopAfter || set.n >= set.total){ endSet(false); return; }
+  set.n++;
+  startReset();
+}
+function startReset(){
+  state.mode = "reset";
+  const c = audioCtx(), secs = settings.resetSec || 15, endAt = performance.now() + secs * 1000;
+  $("#btnStart").disabled = false; $("#btnStart").textContent = "Stop rounds"; $("#btnStart").classList.add("stop");
+  requestWake();
+  const step = () => {
+    if (!set || set.done || state.mode !== "reset") return;
+    const left = Math.max(0, (endAt - performance.now()) / 1000);
+    setFace("Reset", Math.ceil(left) + " s", "Next", "Round " + set.n, "Finger off the trigger");
+    if (left <= 0){
+      /* three ready beeps, one second apart, then the next round */
+      const t0 = c.currentTime + 0.05;
+      for (let i = 0; i < 3; i++) playBeep(t0 + i, READY_HZ, 0.12);
+      setFace("Ready", "…", "Next", "Round " + set.n, "Ready beeps");
+      set.timers.push(setTimeout(() => { if (set && !set.done && state.mode === "reset"){ state.mode = "idle"; startRun(); } }, 3000));
+      return;
+    }
+    set.timers.push(setTimeout(step, 200));
+  };
+  step();
+}
+function endSet(cancelled){
+  if (!set) return;
+  set.done = true; set.timers.forEach(clearTimeout);
+  releaseWake();
+  const recs = set.recs.filter(Boolean), total = set.total;
+  resetLive();
+  $("#faceLbl").textContent = recs.length ? "Rounds done" : "Stopped";
+  renderSetSum(recs, total, cancelled);
+}
+function renderSetSum(recs, total, cancelled){
+  const box = $("#setSum");
+  if (!recs.length){ box.hidden = true; return; }
+  const times = recs.map(r => r.shots.length ? r.shots[r.shots.length - 1] - r.beep : null);
+  const ok = times.filter(t => t != null);
+  const best = ok.length ? Math.min(...ok) : null, avg = ok.length ? ok.reduce((a, b) => a + b, 0) / ok.length : null;
+  const par = recs[0].par, under = par ? recs.filter((r, i) => times[i] != null && times[i] <= par + 0.005 && (!r.need || r.shots.length >= r.need)).length : 0;
+  box.innerHTML = `<div class="tools"><h2 class="grow">Rounds complete</h2><span class="hint">${recs.length} of ${total}${cancelled ? " · stopped early" : ""}</span></div>
+    <div class="set-stats"><div><span class="lbl">Best</span><b>${best != null ? fmt(best) : "–"}</b></div><div><span class="lbl">Average</span><b>${avg != null ? fmt(avg) : "–"}</b></div>${par ? `<div><span class="lbl">Under ${par.toFixed(1)} s</span><b>${under} of ${recs.length}</b></div>` : ""}</div>
+    <ol class="set-list"></ol>
+    <video class="set-vid" controls playsinline preload="metadata" hidden></video>
+    <div class="jr-row"><button class="go" id="setReview">Compare in Range Day Review Room</button></div>
+    <p class="hint">Every round is saved in the Range Day Review Room, where you can line any two up side by side.</p>`;
+  const ol = box.querySelector(".set-list"), vid = box.querySelector(".set-vid");
+  recs.forEach((r, i) => {
+    const li = document.createElement("li");
+    const t = times[i], late = par && t != null && t > par + 0.005, short = r.need && r.shots.length < r.need;
+    const n = document.createElement("span"); n.className = "n"; n.textContent = "Round " + (i + 1);
+    const tm = document.createElement("span"); tm.className = "tm" + (t === best ? " best" : ""); tm.textContent = t != null ? fmt(t) + " s" : "no shots";
+    const note = document.createElement("span"); note.className = "note"; note.textContent = [r.shots.length + (r.shots.length === 1 ? " shot" : " shots"), short ? "missing shots" : "", late ? "over time" : ""].filter(Boolean).join(" · ");
+    const b = document.createElement("button"); b.className = "small"; b.textContent = "Watch";
+    b.onclick = () => { if (vid._u) URL.revokeObjectURL(vid._u); vid._u = URL.createObjectURL(r.blob); vid.src = vid._u; vid.hidden = false;
+      vid.onloadedmetadata = () => { try { vid.currentTime = Math.max(0, r.beep - 1); } catch(e){} vid.play().catch(() => {}); }; vid.scrollIntoView({ behavior: "smooth", block: "nearest" }); };
+    li.append(n, tm, note, b); ol.appendChild(li);
+  });
+  box.querySelector("#setReview").onclick = () => $("#goCompare").click();
+  box.hidden = false;
+  box.scrollIntoView({ behavior: "smooth", block: "start" });
+}
 
 /* ---------- load a clip ---------- */
 $("#fileIn").onchange = async e => {
@@ -1265,8 +1394,8 @@ async function fixDuration(v){
 }
 function waitMeta(v){ return v.readyState >= 1 ? Promise.resolve() : new Promise((res, rej) => { v.onloadedmetadata = () => res(); v.onerror = () => rej(new Error("video")); }); }
 
-async function loadRun(blob, ext, isLive){
-  showMsg($("#liveMsg"), "Finding the start beep and your shots…");
+async function loadRun(blob, ext, isLive, quiet){
+  if (!quiet) showMsg($("#liveMsg"), "Finding the start beep and your shots…");
   try {
     const buf = await blob.arrayBuffer();
     const audio = await audioCtx().decodeAudioData(buf);
@@ -1278,6 +1407,7 @@ async function loadRun(blob, ext, isLive){
     const noBeep = !run.beep;
     /* Old videos often have no timer beep: start the clock at the start of the clip so shots still show up. */
     if (noBeep) run.beep = { t: 0, dur: 0, auto: false };
+    if (quiet){ redetect(); await persistRun(true); return run; }
     pv.src = run.url;
     await waitMeta(pv); await fixDuration(pv);
     const w = pv.videoWidth || 1280, h = pv.videoHeight || 720;
@@ -1294,6 +1424,7 @@ async function loadRun(blob, ext, isLive){
     pv.currentTime = run.beep ? Math.max(0, run.beep.t - 1) : 0;
     window.scrollTo({ top: 0 });
   } catch(e){
+    if (quiet) return null;
     showMsg($("#liveMsg"), "Couldn't read the sound in that video. Try a clip recorded with your phone's camera app or with Start here.", true);
     resetLive(); $("#btnStart").disabled = false;
     return;
