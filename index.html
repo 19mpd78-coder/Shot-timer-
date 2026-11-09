@@ -1715,12 +1715,8 @@ async function loadRunList(){
   try { cmp.runs = (await DB.all()).filter(r => r.blob && r.shots && r.shots.length).sort((x, y) => y.id - x.id); }
   catch(e){ cmp.runs = []; }
   cmp.sel = cmp.sel.filter(id => cmp.runs.some(r => r.id === id));
-  if (!cmp.sel.length && cmp.runs.length === 1) cmp.sel = [cmp.runs[0].id];
-  if (!cmp.sel.length && cmp.runs.length >= 2){
-    const fastest = cmp.runs.reduce((m, r) => drawOf(r) < drawOf(m) ? r : m);
-    const other = cmp.runs.find(r => r.id !== fastest.id);
-    cmp.sel = [fastest.id, other.id];
-  }
+  /* start by watching the newest string on its own; tap another to compare */
+  if (!cmp.sel.length && cmp.runs.length) cmp.sel = [cmp.runs[0].id];
   renderRunList();
   await loadPair();
 }
