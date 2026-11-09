@@ -480,7 +480,7 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
     </button>
     <button class="tile" id="goCompare">
       <span class="tile-t">Range Day Review Room</span>
-      <span class="tile-d">For learning only. Sit down and study your strings: watch two together from the beep, side by side or as a ghost, and see where the faster draw pulls ahead.</span>
+      <span class="tile-d">For learning only. Sit down and study your strings: watch one on its own, or two together from the beep, side by side or as a ghost.</span>
       <span class="tile-m" id="runCount">No saved strings yet</span>
     </button>
     <button class="tile" id="goLoad">
@@ -705,7 +705,7 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
 
     <div class="cmp-stage" id="cmpStage">
       <canvas id="cmpCv" width="1080" height="960"></canvas>
-      <div class="cmp-empty" id="cmpEmpty"><p id="cmpEmptyTxt">Record at least two strings with Solo Training, then pick two here.</p></div>
+      <div class="cmp-empty" id="cmpEmpty"><p id="cmpEmptyTxt">Pick one string below to watch it, or two to compare.</p></div>
     </div>
 
     <div id="cmpCtrls" class="cmp-ctrls" hidden>
@@ -728,7 +728,7 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <div class="tools">
         <span class="lbl">Sound</span>
         <div class="seg" role="group" aria-label="Sound">
-          <button data-sound="both" aria-pressed="true">Both</button>
+          <button data-sound="both" aria-pressed="true">On</button>
           <button data-sound="a" aria-pressed="false">Faster</button>
           <button data-sound="b" aria-pressed="false">Slower</button>
           <button data-sound="off" aria-pressed="false">Off</button>
@@ -757,7 +757,7 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <div class="legend" id="cmpLegend"></div>
     </div>
 
-    <div class="tools"><span class="lbl grow">Your live strings · pick two</span><span class="hint" id="runHint"></span></div>
+    <div class="tools"><span class="lbl grow">Your live strings · pick 1 to watch, 2 to compare</span><span class="hint" id="runHint"></span></div>
     <ol class="runs" id="runList"></ol>
     <p class="hint">Only strings recorded with Solo Training are saved here, and only on this phone. The newest 30 are kept.</p>
   </section>
@@ -1715,7 +1715,8 @@ async function loadRunList(){
   try { cmp.runs = (await DB.all()).filter(r => r.blob && r.shots && r.shots.length).sort((x, y) => y.id - x.id); }
   catch(e){ cmp.runs = []; }
   cmp.sel = cmp.sel.filter(id => cmp.runs.some(r => r.id === id));
-  if (cmp.sel.length < 2 && cmp.runs.length >= 2){
+  if (!cmp.sel.length && cmp.runs.length === 1) cmp.sel = [cmp.runs[0].id];
+  if (!cmp.sel.length && cmp.runs.length >= 2){
     const fastest = cmp.runs.reduce((m, r) => drawOf(r) < drawOf(m) ? r : m);
     const other = cmp.runs.find(r => r.id !== fastest.id);
     cmp.sel = [fastest.id, other.id];
@@ -1725,7 +1726,7 @@ async function loadRunList(){
 }
 function renderRunList(){
   const list = $("#runList"); list.textContent = "";
-  $("#runHint").textContent = cmp.runs.length ? cmp.sel.length + " of 2 picked" : "";
+  $("#runHint").textContent = !cmp.runs.length ? "" : cmp.sel.length === 1 ? "1 picked · watching · pick another to compare" : cmp.sel.length === 2 ? "2 picked · comparing" : "Pick 1 to watch, 2 to compare";
   if (!cmp.runs.length){
     const li = document.createElement("li"); const s = document.createElement("span"); s.className = "none";
     s.textContent = "No live strings saved yet. Use Solo Training to record one.";
@@ -1772,15 +1773,18 @@ function setSrc(v, r){
 async function loadPair(){
   cmpPause();
   const pick = cmp.sel.map(id => cmp.runs.find(r => r.id === id)).filter(Boolean).sort((x, y) => drawOf(x) - drawOf(y));
-  if (pick.length < 2){
-    cmp.a = cmp.b = null;
-    $("#cmpEmptyTxt").textContent = cmp.runs.length < 2
-      ? "Record at least two strings with Solo Training, then pick two here."
-      : "Pick two strings below to compare.";
+  if (!pick.length){
+    cmp.a = cmp.b = null; cmp.single = false; setModeUI();
+    $("#cmpEmptyTxt").textContent = !cmp.runs.length
+      ? "Record a string with Solo Training, then watch it here."
+      : "Pick one string below to watch it, or two to compare.";
     $("#cmpEmpty").hidden = false; $("#cmpCtrls").hidden = true;
     return;
   }
-  cmp.a = pick[0]; cmp.b = pick[1];
+  /* one string = watch it on its own; two = side by side or ghost */
+  cmp.single = pick.length === 1;
+  cmp.a = pick[0]; cmp.b = cmp.single ? pick[0] : pick[1];
+  setModeUI();
   $("#cmpEmptyTxt").textContent = "Loading…"; $("#cmpEmpty").hidden = false;
   try {
     setSrc(cvA, cmp.a); setSrc(cvB, cmp.b);
@@ -1802,7 +1806,7 @@ async function loadPair(){
 function sizeCanvas(){
   const ref = cvB.videoWidth ? cvB : cvA;
   const vw = ref.videoWidth || 1280, vh = ref.videoHeight || 720, portrait = vh > vw;
-  if (cmp.mode === "ghost"){
+  if (cmp.mode === "ghost" || cmp.single){
     const sc = Math.min(1, 1280 / Math.max(vw, vh));
     cmpCv.width = Math.round(vw * sc); cmpCv.height = Math.round(vh * sc);
   } else if (portrait){
@@ -1887,6 +1891,7 @@ function cmpLoop(now){
 }
 function syncVids(force){
   for (const [v, r, k] of [[cvA, cmp.a, "a"], [cvB, cmp.b, "b"]]){
+    if (cmp.single && k === "b"){ if (!v.paused) v.pause(); continue; }
     const t = r.beep + cmp.s + cmp.off[k], dur = isFinite(v.duration) ? v.duration : 1e9;
     if (t < 0 || t >= dur - 0.03){ if (!v.paused) v.pause(); continue; }
     if (force || Math.abs(v.currentTime - t) > 0.08) v.currentTime = t;
@@ -1935,10 +1940,27 @@ function runState(v, r){
   if (s >= d - 0.02) return { label: "DRAW", value: fmt(d), fired: true, flash: s - d < 0.15, s };
   return { label: "TIME", value: fmt(s), fired: false, flash: false, s };
 }
+/* Single string: running time, shot count and the latest split at the frame on screen. */
+function singleState(v, r){
+  const s = v.currentTime - r.beep, sh = r.shots, n = sh.filter(t => t <= v.currentTime + 0.001).length;
+  if (s < 0) return { label: "STANDBY", value: "0.00", flash: false, extra: "", n };
+  const last = n ? sh[n - 1] : null, flash = last != null && v.currentTime - last < 0.15;
+  const split = n === 0 ? "" : n === 1 ? "DRAW " + fmt(sh[0] - r.beep) : "SPLIT " + fmt(sh[n - 1] - sh[n - 2]);
+  if (n === sh.length) return { label: "FINAL · " + n + (n === 1 ? " SHOT" : " SHOTS"), value: fmt(sh[sh.length - 1] - r.beep), flash, extra: "", split, n };
+  return { label: "TIME · SHOT " + n + " OF " + sh.length, value: fmt(s), flash, extra: "", split, n };
+}
 function drawCompare(){
   const g = cg, W = cmpCv.width, H = cmpCv.height;
   g.fillStyle = "#000"; g.fillRect(0, 0, W, H);
   if (!cmp.a) return;
+  if (cmp.single){
+    drawContain(cvA, 0, 0, W, H);
+    const u = Math.min(W, H) / 100, r = cmp.a, st = singleState(cvA, r);
+    chip(g, u * 3, u * 3, u, [r.who ? r.who.toUpperCase().slice(0, 16) : "", r.drill ? r.drill.toUpperCase() : "", whenTxt(r.id).toUpperCase()].filter(Boolean).join(" · "), true);
+    const p1 = clockPlate(g, u * 3, H - u * 20, u, st.label, st.value, st.flash, "");
+    if (st.split) chip(g, u * 3 + p1.w + u * 2, H - u * 20 + p1.h - u * 6.4, u, st.split, false);
+    return;
+  }
   const A = runState(cvA, cmp.a), B = runState(cvB, cmp.b), dA = drawOf(cmp.a), dB = drawOf(cmp.b);
   const behind = B.fired ? "+" + fmt(dB - dA) : (A.fired ? "+" + fmt(Math.max(0, B.s - dA)) : "");
   g.save();
@@ -1971,6 +1993,16 @@ function drawCompare(){
 function renderLegend(){
   const L = $("#cmpLegend"); L.textContent = "";
   if (!cmp.a) return;
+  if (cmp.single){
+    const r = cmp.a, sp = splitsOf(r.shots, r.beep), rest = sp.slice(1);
+    [["Draw", fmt(sp[0])], ["Total · " + r.shots.length + (r.shots.length === 1 ? " shot" : " shots"), fmt(endOf(r))], ["Best split", rest.length ? fmt(Math.min(...rest)) : "–"]].forEach(([name, val]) => {
+      const row = document.createElement("div");
+      const l = document.createElement("span"); l.className = "lbl"; l.textContent = name;
+      const d = document.createElement("span"); d.className = "digits"; d.textContent = val;
+      row.append(l, d); L.appendChild(row);
+    });
+    return;
+  }
   const dA = drawOf(cmp.a), dB = drawOf(cmp.b);
   [[cmp.a, "Faster", ""], [cmp.b, "Slower", "+" + fmt(dB - dA) + " on the draw"]].forEach(([r, name, delta]) => {
     const row = document.createElement("div");
@@ -1983,9 +2015,16 @@ function renderLegend(){
 }
 function setModeUI(){
   document.querySelectorAll("[data-mode]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.mode === cmp.mode)));
-  $("#ghostField").hidden = cmp.mode !== "ghost";
+  $("#ghostField").hidden = cmp.mode !== "ghost" || !!cmp.single;
   $("#cmpView").textContent = cmp.mode === "ghost" ? "View: Ghost" : "View: Side by side";
+  /* one string: no view switch, no per-side controls, simple sound */
+  $("#cmpView").hidden = !!cmp.single;
+  const sc = document.querySelector(".side-ctrl"); if (sc) sc.hidden = !!cmp.single;
+  document.querySelectorAll('[data-sound="a"],[data-sound="b"]').forEach(b => b.hidden = !!cmp.single);
+  $("#cmpToShot").textContent = cmp.single ? "Jump to first shot" : "Jump to faster shot";
+  applySoundSafe();
 }
+function applySoundSafe(){ if (typeof applySound === "function" && cmp.sound) applySound(); }
 $("#cmpView").onclick = () => {
   cmp.mode = cmp.mode === "ghost" ? "side" : "ghost"; store.set("cmpMode", cmp.mode); setModeUI();
   if (cmp.a){ sizeCanvas(); drawCompare(); }
@@ -1997,8 +2036,9 @@ document.querySelectorAll("[data-mode]").forEach(b => b.onclick = () => {
 /* Sound: which side you hear. Both = hear the faster shot land first, then the slower one. */
 cmp.sound = store.get("cmpSound", "both");
 function applySound(){
+  if (cmp.single && (cmp.sound === "a" || cmp.sound === "b")) cmp.sound = "both";
   cvA.muted = !(cmp.sound === "both" || cmp.sound === "a");
-  cvB.muted = !(cmp.sound === "both" || cmp.sound === "b");
+  cvB.muted = cmp.single || !(cmp.sound === "both" || cmp.sound === "b");
   for (const v of [cvA, cvB]) v.volume = 1;
   document.querySelectorAll("[data-sound]").forEach(x => x.setAttribute("aria-pressed", String(x.dataset.sound === cmp.sound)));
 }
