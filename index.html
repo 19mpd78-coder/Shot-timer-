@@ -432,6 +432,10 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <p class="hint">To drag them anywhere, open a video and tap Move overlays.</p>
     </div>
     <div class="field">
+      <label class="check"><input type="checkbox" id="showList"> Show every split in its own window</label>
+      <p class="hint">A small list adds a row as each shot breaks: draw, then the time between each shot.</p>
+    </div>
+    <div class="field">
       <label class="lbl" for="ovScale">Overlay size</label>
       <input type="range" id="ovScale" min="60" max="160" step="5">
     </div>
@@ -1552,16 +1556,19 @@ function overlayState(t){
 }
 function rr(g, x, y, w, h, r){ g.beginPath(); g.moveTo(x + r, y); g.arcTo(x + w, y, x + w, y + h, r); g.arcTo(x + w, y + h, x, y + h, r); g.arcTo(x, y + h, x, y, r); g.arcTo(x, y, x + w, y, r); g.closePath(); }
 /* Layout: each plate has a center point stored as a fraction of the frame (0..1). */
+/* list = every split so far; it grows up (or down) from its anchor so it never covers the plates */
 const PRESETS = {
-  bottom: { time: { x: 0.25, y: 0.86 }, split: { x: 0.83, y: 0.86 } },
-  top:    { time: { x: 0.25, y: 0.14 }, split: { x: 0.83, y: 0.14 } },
-  left:   { time: { x: 0, y: 0.62 }, split: { x: 0, y: 0.9 } },
-  right:  { time: { x: 1, y: 0.62 }, split: { x: 1, y: 0.9 } }
+  bottom: { time: { x: 0.25, y: 0.86 }, split: { x: 0.83, y: 0.86 }, list: { x: 0.83, y: 0.73, grow: "up" } },
+  top:    { time: { x: 0.25, y: 0.14 }, split: { x: 0.83, y: 0.14 }, list: { x: 0.83, y: 0.27, grow: "down" } },
+  left:   { time: { x: 0, y: 0.62 }, split: { x: 0, y: 0.9 }, list: { x: 0, y: 0.49, grow: "up" } },
+  right:  { time: { x: 1, y: 0.62 }, split: { x: 1, y: 0.9 }, list: { x: 1, y: 0.49, grow: "up" } }
 };
 const savedLayout = store.get("layout", null);
 const layout = {
   time: Object.assign({}, PRESETS.bottom.time, savedLayout && savedLayout.time),
   split: Object.assign({}, PRESETS.bottom.split, savedLayout && savedLayout.split),
+  list: Object.assign({}, PRESETS.bottom.list, savedLayout && savedLayout.list),
+  showList: !(savedLayout && savedLayout.showList === false),
   scale: savedLayout && savedLayout.scale ? savedLayout.scale : 1
 };
 const saveLayout = () => store.set("layout", layout);
@@ -1627,7 +1634,37 @@ function drawOverlay(g, W, H, t){
   g.fillStyle = "#e8eaed"; g.fillText(sTxt, rx, r2.y + ph * 0.66);
 
   plateRects = { time: r1, split: r2 };
+  if (layout.showList) drawSplitList(g, W, H, u, st);
   g.restore();
+}
+/* Every split so far, one row per shot, in its own small window. Columns of 6 rows. */
+function drawSplitList(g, W, H, u, st){
+  const s = run ? run.shots : [], b = run && run.beep ? run.beep.t : 0;
+  let rows = [];
+  for (let i = 0; i < st.n; i++) rows.push([i === 0 ? "DRAW" : String(i + 1), fmt(i === 0 ? s[0] - b : s[i] - s[i - 1])]);
+  if (!rows.length && editLayout) rows = [["DRAW", "1.10"], ["2", "0.28"], ["3", "0.26"]];
+  if (!rows.length) return;
+  const PER = 6, cols = Math.ceil(rows.length / PER), inCol = Math.min(PER, rows.length);
+  const rh = u * 5.2, head = u * 5, pad = u * 2.2, cw = u * 23;
+  const w = pad * 2 + cols * cw + (cols - 1) * u * 5, h = head + inCol * rh + pad;
+  const m = u * 2, P = layout.list;
+  const x = Math.min(Math.max(m, P.x * W - w / 2), Math.max(m, W - w - m));
+  const ay = P.y * H, y0 = P.grow === "down" ? ay : ay - h;
+  const y = Math.min(Math.max(m, y0), Math.max(m, H - h - m));
+  const r = { x, y, w, h, ax: P.x * W, ay };
+  plateBg(g, r, u, st.sinceShot < 0.15);
+  g.textAlign = "left"; g.font = LABEL_FONT(u * 2.6); track(g, (u * 0.35).toFixed(1) + "px");
+  g.fillStyle = "#8b919a"; g.fillText("SPLITS", x + pad, y + u * 3.8);
+  rows.forEach(([lbl, val], i) => {
+    const c = Math.floor(i / PER), rI = i % PER;
+    const cx = x + pad + c * (cw + u * 5), cy = y + head + rI * rh + rh * 0.72;
+    const latest = i === rows.length - 1;
+    g.font = LABEL_FONT(u * 2.6); track(g, (u * 0.3).toFixed(1) + "px");
+    g.fillStyle = latest ? "#c4c9cf" : "#6f757d"; g.textAlign = "left"; g.fillText(lbl, cx, cy);
+    g.font = DIGIT_FONT(u * 4.2); track(g, "0px");
+    g.fillStyle = latest ? "#ffffff" : "#c4c9cf"; g.textAlign = "right"; g.fillText(val, cx + cw, cy);
+  });
+  plateRects.list = r;
 }
 
 /* ---------- moving the overlays ---------- */
@@ -1639,10 +1676,12 @@ let drag = null;
 pov.addEventListener("pointerdown", e => {
   if (!editLayout) return;
   const p = toCanvas(e);
-  for (const k of ["split", "time"]){
+  for (const k of ["list", "split", "time"]){
     const r = plateRects[k];
     if (r && p.x >= r.x && p.x <= r.x + r.w && p.y >= r.y && p.y <= r.y + r.h){
-      drag = { k, dx: p.x - (r.x + r.w / 2), dy: p.y - (r.y + r.h / 2) };
+      drag = k === "list"
+        ? { k, dx: p.x - (r.x + r.w / 2), dy: p.y - (layout.list.grow === "down" ? r.y : r.y + r.h) }
+        : { k, dx: p.x - (r.x + r.w / 2), dy: p.y - (r.y + r.h / 2) };
       try { pov.setPointerCapture(e.pointerId); } catch(err){}
       e.preventDefault(); return;
     }
@@ -1664,7 +1703,7 @@ function setEditLayout(on){
   pv.controls = !on; if (on) pv.pause();
   const b = $("#btnLayout"); b.textContent = on ? "Done" : "Move overlays"; b.setAttribute("aria-pressed", String(on));
   $("#layoutHint").textContent = on
-    ? "Drag the timer and the split box. Tap Done when they're where you want them."
+    ? "Drag the timer, the split box and the splits list. Tap Done when they're where you want them."
     : "Drag the timer and split box anywhere. Sizes and presets are in Settings.";
   drawPreview();
 }
@@ -1672,10 +1711,12 @@ $("#btnLayout").onclick = () => setEditLayout(!editLayout);
 document.querySelectorAll("[data-preset]").forEach(btn => {
   btn.onclick = () => {
     const p = PRESETS[btn.dataset.preset];
-    layout.time = Object.assign({}, p.time); layout.split = Object.assign({}, p.split);
+    layout.time = Object.assign({}, p.time); layout.split = Object.assign({}, p.split); layout.list = Object.assign({}, p.list);
     saveLayout(); drawPreview();
   };
 });
+$("#showList").checked = layout.showList;
+$("#showList").onchange = e => { layout.showList = e.target.checked; saveLayout(); drawPreview(); };
 $("#ovScale").value = Math.round(layout.scale * 100);
 $("#ovScale").oninput = e => { layout.scale = Number(e.target.value) / 100; drawPreview(); };
 $("#ovScale").onchange = saveLayout;
@@ -3333,7 +3374,7 @@ $("#shooterName").value = settings.name || "";
 renderBoard();
 setModeUI();
 /* Test hook, only when the address ends in #test */
-if (location.hash === "#test") window.__stc = { buildShare, importFile, readShare, loadRun: (b, ext, drill, name) => { lastDrill = drill || ""; lastName = name || ""; lastJunior = !!settings.junior; return loadRun(b, ext, true); }, DB,
+if (location.hash === "#test") window.__stc = { getRun: () => run, drawPreview, buildShare, importFile, readShare, loadRun: (b, ext, drill, name) => { lastDrill = drill || ""; lastName = name || ""; lastJunior = !!settings.junior; return loadRun(b, ext, true); }, DB,
   loadMatchRun: (b, ext) => { lastTurn = currentTurn(); lastParRec = match ? match.par : 0; return loadRun(b, ext, true); } };
 })();
 </script>
