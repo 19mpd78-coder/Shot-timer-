@@ -1694,7 +1694,7 @@ pv.addEventListener("timeupdate", () => { if (pv.paused) drawPreview(); });
    The faster draw is always "A": left/top in side by side, the see-through layer in ghost. */
 const cmp = { mode: store.get("cmpMode", "side"), alpha: 0.5, rate: 1, sel: [], runs: [], s: -0.5, end: 3,
               playing: false, last: 0, raf: 0, a: null, b: null, split: "h", seekTok: 0,
-              off: { a: 0, b: 0 }, lastK: "a" };
+              off: { a: 0, b: 0 }, lastK: "a", playTok: 0, waiting: false };
 const PRE = 0.5, FRAME = 1 / 30;
 const hold = document.createElement("div");
 hold.style.cssText = "position:fixed;left:0;top:0;width:2px;height:2px;overflow:hidden;opacity:0;pointer-events:none";
@@ -1864,33 +1864,64 @@ function cmpPlay(){
   for (const v of [cvA, cvB]) v.playbackRate = cmp.rate;
   applySound();
   syncVids(true);
-  cmp.last = performance.now();
   $("#cmpPlay").textContent = "Pause";
+  /* don't start the clock until every side that should be moving is actually playing,
+     so a slow side can't fall behind before it starts */
+  cmp.waiting = true;
+  const tok = ++cmp.playTok;
+  const ready = [[cvA, "a"], [cvB, "b"]].filter(([v, k]) => !(cmp.single && k === "b") && !v.paused)
+    .map(([v]) => new Promise(res => { if (v.readyState >= 3 && !v.seeking) return res(); const f = () => { v.removeEventListener("playing", f); v.removeEventListener("canplay", f); res(); }; v.addEventListener("playing", f); v.addEventListener("canplay", f); }));
+  Promise.race([Promise.all(ready), new Promise(res => setTimeout(res, 2500))]).then(() => {
+    if (tok !== cmp.playTok || !cmp.playing) return;
+    cmp.waiting = false; cmp.last = performance.now();
+  });
   cancelAnimationFrame(cmp.raf); cmp.raf = requestAnimationFrame(cmpLoop);
 }
 function cmpPause(){
   if (!cmp.playing) return;
-  cmp.playing = false;
+  cmp.playing = false; cmp.waiting = false; cmp.playTok++;
   cancelAnimationFrame(cmp.raf);
   cvA.pause(); cvB.pause();
+  for (const v of [cvA, cvB]) v.playbackRate = cmp.rate;
   $("#cmpPlay").textContent = "Play";
   seekBoth();
 }
+/* The clock follows a playing video (the "lead"), not the wall clock, so if the phone
+   stutters the timer waits instead of racing ahead and forcing the other side to jump. */
+function leadSide(){
+  for (const [v, r, k] of [[cvA, cmp.a, "a"], [cvB, cmp.b, "b"]]){
+    if (cmp.single && k === "b") continue;
+    if (!v.paused && !v.seeking && v.readyState >= 2) return [v, r, k];
+  }
+  return null;
+}
 function cmpLoop(now){
   if (!cmp.playing) return;
-  cmp.s += Math.min(0.1, (now - cmp.last) / 1000) * cmp.rate; cmp.last = now;
-  if (Math.min(sidePos("a"), sidePos("b")) >= cmp.end){ cmpPause(); return; }
-  syncVids(false);
+  if (cmp.waiting){ cmp.last = now; cmp.raf = requestAnimationFrame(cmpLoop); return; }
+  const lead = leadSide();
+  if (lead){ const [v, r, k] = lead; cmp.s = v.currentTime - r.beep - cmp.off[k]; }
+  else cmp.s += Math.min(0.1, (now - cmp.last) / 1000) * cmp.rate;
+  cmp.last = now;
+  const endPos = cmp.single ? sidePos("a") : Math.min(sidePos("a"), sidePos("b"));
+  if (endPos >= cmp.end){ cmpPause(); return; }
+  syncVids(false, lead ? lead[2] : null);
   drawCompare();
   updateSideUI();
   cmp.raf = requestAnimationFrame(cmpLoop);
 }
-function syncVids(force){
+function syncVids(force, leadK){
   for (const [v, r, k] of [[cvA, cmp.a, "a"], [cvB, cmp.b, "b"]]){
     if (cmp.single && k === "b"){ if (!v.paused) v.pause(); continue; }
     const t = r.beep + cmp.s + cmp.off[k], dur = isFinite(v.duration) ? v.duration : 1e9;
     if (t < 0 || t >= dur - 0.03){ if (!v.paused) v.pause(); continue; }
-    if (force || Math.abs(v.currentTime - t) > 0.08) v.currentTime = t;
+    if (force){ v.currentTime = t; v.playbackRate = cmp.rate; }
+    else if (k !== leadK && !v.seeking){
+      /* follow the lead gently: nudge the speed for small drift, seek only if far off */
+      const drift = v.currentTime - t;
+      if (Math.abs(drift) > 0.4) v.currentTime = t;
+      else if (Math.abs(drift) > 0.03) v.playbackRate = cmp.rate * (drift > 0 ? 0.85 : 1.15);
+      else if (v.playbackRate !== cmp.rate) v.playbackRate = cmp.rate;
+    }
     if (v.paused) v.play().catch(() => {});
   }
 }
