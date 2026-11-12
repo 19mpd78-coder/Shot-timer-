@@ -432,8 +432,12 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <p class="hint">To drag them anywhere, open a video and tap Move overlays.</p>
     </div>
     <div class="field">
-      <label class="check"><input type="checkbox" id="showList"> Show every split in its own window</label>
-      <p class="hint">A small list adds a row as each shot breaks: draw, then the time between each shot.</p>
+      <label class="check"><input type="checkbox" id="showList"> Each split in its own window beside the timer</label>
+      <div class="seg" role="group" aria-label="How the split windows line up" id="splitStyleSeg">
+        <button data-sstyle="stack" aria-pressed="true">Stacked</button>
+        <button data-sstyle="row" aria-pressed="false">In a row</button>
+      </div>
+      <p class="hint">Stacked: the draw lines up with the top of the timer and each split opens below it, three to a column. In a row: each split opens to the right of the last. Turn the box off to show just the latest split in one window.</p>
     </div>
     <div class="field">
       <label class="lbl" for="ovScale">Overlay size</label>
@@ -1569,6 +1573,7 @@ const layout = {
   split: Object.assign({}, PRESETS.bottom.split, savedLayout && savedLayout.split),
   list: Object.assign({}, PRESETS.bottom.list, savedLayout && savedLayout.list),
   showList: !(savedLayout && savedLayout.showList === false),
+  splitStyle: savedLayout && savedLayout.splitStyle === "row" ? "row" : "stack",
   scale: savedLayout && savedLayout.scale ? savedLayout.scale : 1
 };
 const saveLayout = () => store.set("layout", layout);
@@ -1619,7 +1624,9 @@ function drawOverlay(g, W, H, t){
   g.font = DIGIT_FONT(u * 12); track(g, "0px");
   g.fillStyle = grad; g.fillText(tTxt, r1.x + u * 3, r1.y + ph - u * 3);
 
-  /* split plate */
+  if (layout.showList){ plateRects = { time: r1 }; drawSplitBoxes(g, W, H, u, st, r1, ph); g.restore(); return; }
+
+  /* split plate (classic: latest split only) */
   const sTxt = st.split == null ? "–" : fmt(st.split);
   g.font = DIGIT_FONT(u * 7);
   const r2 = plateBox(W, H, u, layout.split, Math.max(u * 22, g.measureText(sTxt).width + u * 7), ph);
@@ -1634,8 +1641,64 @@ function drawOverlay(g, W, H, t){
   g.fillStyle = "#e8eaed"; g.fillText(sTxt, rx, r2.y + ph * 0.66);
 
   plateRects = { time: r1, split: r2 };
-  if (layout.showList) drawSplitList(g, W, H, u, st);
   g.restore();
+}
+/* Each split in its own small window, stacked three to a column beside the total timer:
+   the first lines up with the top of the timer (DRAW), the next opens below it, and so on.
+   When there's no more room beside the timer, new columns open in a band above it. */
+const ordinal = n => n + (n % 100 >= 11 && n % 100 <= 13 ? "TH" : ["TH", "ST", "ND", "RD"][n % 10] || "TH");
+function drawSplitBoxes(g, W, H, u, st, r1, ph){
+  const s = run ? run.shots : [], b = run && run.beep ? run.beep.t : 0;
+  let items = [];
+  for (let i = 0; i < st.n; i++) items.push([i === 0 ? "DRAW" : ordinal(i + 1), fmt(i === 0 ? s[0] - b : s[i] - s[i - 1])]);
+  if (!items.length && editLayout) items = [["DRAW", "1.10"], ["2ND", "0.28"], ["3RD", "0.26"]];
+  if (!items.length) return;
+  const row = layout.splitStyle === "row", per = row ? 1 : 3;
+  const gap = u * 1.2, bh = row ? ph : (ph - gap * 2) / 3, bw = row ? u * 15.5 : u * 22, m = u * 2;
+  /* bands: band 0 sits beside the timer (to its right, or to its left if the timer is on the right edge) */
+  const rightRoom = W - m - (r1.x + r1.w + gap), leftRoom = r1.x - gap - m;
+  const sideRight = rightRoom >= bw || rightRoom >= leftRoom;
+  const fitCols = room => Math.max(0, Math.floor((room + gap) / (bw + gap)));
+  const bands = [];
+  let left = items.length, bi = 0;
+  while (left > 0 && bi < 8){
+    let x0, cols, dir = 1, y0;
+    if (bi === 0){
+      cols = fitCols(sideRight ? rightRoom : leftRoom);
+      x0 = sideRight ? r1.x + r1.w + gap : r1.x - gap - bw; dir = sideRight ? 1 : -1; y0 = r1.y;
+    } else {
+      cols = Math.max(1, fitCols(W - m * 2));
+      const fromLeft = r1.x + r1.w / 2 < W / 2;
+      x0 = fromLeft ? m : W - m - bw; dir = fromLeft ? 1 : -1;
+      const above = r1.y - bi * (ph + gap);
+      y0 = above >= m ? above : r1.y + r1.h + gap + (bi - 1) * (ph + gap);
+    }
+    if (cols > 0){ const take = Math.min(left, cols * per); bands.push({ x0, y0, dir, take }); left -= take; }
+    bi++;
+  }
+  let k = 0;
+  g.textBaseline = "alphabetic";
+  bands.forEach(bd => {
+    for (let j = 0; j < bd.take; j++, k++){
+      const col = Math.floor(j / per), rI = j % per;
+      const x = bd.x0 + bd.dir * col * (bw + gap), y = bd.y0 + rI * (bh + gap);
+      const latest = k === items.length - 1, [lbl, val] = items[k];
+      if (row){
+        /* in a row: tall windows like the timer, label on top, time below */
+        plateBg(g, { x, y, w: bw, h: bh }, u, latest && st.sinceShot < 0.15);
+        g.textAlign = "left"; g.font = LABEL_FONT(u * 2.6); track(g, (u * 0.35).toFixed(1) + "px");
+        g.fillStyle = latest ? "#c4c9cf" : "#8b919a"; g.fillText(lbl, x + u * 2.2, y + u * 4.6);
+        g.font = DIGIT_FONT(u * 5); track(g, "0px");
+        g.fillStyle = latest ? "#ffffff" : "#d6d9dd"; g.textAlign = "center"; g.fillText(val, x + bw / 2, y + bh - u * 3.6);
+        continue;
+      }
+      plateBg(g, { x, y, w: bw, h: bh }, u * 0.7, latest && st.sinceShot < 0.15);
+      g.textAlign = "left"; g.font = LABEL_FONT(u * 2.3); track(g, (u * 0.3).toFixed(1) + "px");
+      g.fillStyle = latest ? "#c4c9cf" : "#8b919a"; g.fillText(lbl, x + u * 1.8, y + bh / 2 + u * 0.8);
+      g.textAlign = "right"; g.font = DIGIT_FONT(Math.min(u * 4.4, bh * 0.72)); track(g, "0px");
+      g.fillStyle = latest ? "#ffffff" : "#d6d9dd"; g.fillText(val, x + bw - u * 1.8, y + bh / 2 + Math.min(u * 4.4, bh * 0.72) * 0.36);
+    }
+  });
 }
 /* Every split so far, one row per shot, in its own small window. Columns of 6 rows. */
 function drawSplitList(g, W, H, u, st){
@@ -1703,7 +1766,7 @@ function setEditLayout(on){
   pv.controls = !on; if (on) pv.pause();
   const b = $("#btnLayout"); b.textContent = on ? "Done" : "Move overlays"; b.setAttribute("aria-pressed", String(on));
   $("#layoutHint").textContent = on
-    ? "Drag the timer, the split box and the splits list. Tap Done when they're where you want them."
+    ? "Drag the timer (the split windows move with it). Tap Done when it's where you want it."
     : "Drag the timer and split box anywhere. Sizes and presets are in Settings.";
   drawPreview();
 }
@@ -1716,7 +1779,12 @@ document.querySelectorAll("[data-preset]").forEach(btn => {
   };
 });
 $("#showList").checked = layout.showList;
-$("#showList").onchange = e => { layout.showList = e.target.checked; saveLayout(); drawPreview(); };
+$("#showList").onchange = e => { layout.showList = e.target.checked; saveLayout(); syncSplitStyle(); drawPreview(); };
+function syncSplitStyle(){
+  document.querySelectorAll("[data-sstyle]").forEach(b => { b.setAttribute("aria-pressed", String((layout.splitStyle || "stack") === b.dataset.sstyle)); b.disabled = !layout.showList; });
+}
+document.querySelectorAll("[data-sstyle]").forEach(b => b.onclick = () => { layout.splitStyle = b.dataset.sstyle; saveLayout(); syncSplitStyle(); drawPreview(); });
+syncSplitStyle();
 $("#ovScale").value = Math.round(layout.scale * 100);
 $("#ovScale").oninput = e => { layout.scale = Number(e.target.value) / 100; drawPreview(); };
 $("#ovScale").onchange = saveLayout;
