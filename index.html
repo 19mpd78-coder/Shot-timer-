@@ -338,6 +338,27 @@ button,label.file{-webkit-tap-highlight-color:transparent}
 .nb-q .nb-seg input:checked + span{background:var(--chrome);color:#121417;border-color:#9aa0a8}
 .nb-q .nb-seg input:focus-visible + span{outline:2px solid var(--silver);outline-offset:2px}
 .nb-steps{margin:0;padding-left:1.3em;display:flex;flex-direction:column;gap:8px;color:var(--white)}
+/* ---------- Solo Training: bests + progress ---------- */
+.prog{display:flex;flex-direction:column;gap:12px}
+.pb-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media (min-width:640px){.pb-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+.pb{border:1px solid var(--line);border-radius:12px;background:var(--panel-2);padding:10px 12px;display:flex;flex-direction:column;gap:4px;min-width:0}
+.pb .lbl{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.pb b{font-family:var(--f-digits);font-size:1.6rem;color:var(--white);line-height:1.1}
+.pb .when{font-size:.78rem;color:var(--steel)}
+.pb .small{align-self:flex-start;margin-top:2px}
+.pb.none b{color:var(--steel)}
+.pb-player video{width:100%;max-width:100%;border-radius:10px;background:#000}
+.prog-head{margin-top:4px}
+.prog-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.prog-stats div{border:1px solid var(--line);border-radius:10px;padding:8px 10px;background:var(--panel-2);display:flex;flex-direction:column;gap:2px;min-width:0}
+.prog-stats b{font-family:var(--f-digits);font-size:1.25rem;color:var(--white)}
+.prog-stats .delta{font-size:.78rem;color:var(--silver)}
+.prog-chart{position:relative;width:100%}
+.prog-chart svg{display:block;width:100%;height:auto;touch-action:pan-y}
+.prog-tip{position:absolute;pointer-events:none;background:#0b0c0e;border:1px solid var(--steel);border-radius:8px;padding:5px 8px;font-size:.8rem;color:var(--white);white-space:nowrap;transform:translate(-50%,-115%)}
+.prog-tip b{font-family:var(--f-digits);font-size:.95rem}
+.prog-empty{padding:18px 12px;border:1px dashed var(--line);border-radius:10px;color:var(--steel);text-align:center}
 /* rounds in a row */
 .set-sum{border-color:var(--steel)}
 .set-stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(90px,1fr));gap:10px}
@@ -528,6 +549,24 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <div class="ms-name" id="msName">Shooter</div>
       <div class="hint" id="msTeam"></div>
       <p class="ms-safe" id="msSafe">The phone runner starts each string. Shooter, hands off the phone.</p>
+    </div>
+    <div class="panel prog" id="progPanel">
+      <div class="tools"><h2 class="grow">Your bests</h2><span class="hint">Solo Training, live strings</span></div>
+      <div class="pb-grid" id="pbGrid"></div>
+      <div class="pb-player" id="pbPlayer" hidden>
+        <div class="tools"><span class="grow ft-now" id="pbNow"></span><button class="small" id="pbClose">Close</button></div>
+        <video id="pbVid" controls playsinline preload="auto"></video>
+      </div>
+      <div class="tools prog-head"><h2 class="grow">Your progress</h2><span class="hint">Lower is faster</span></div>
+      <div class="tools" role="group" aria-label="Progress drill">
+        <button class="small" data-pdrill="bill" aria-pressed="true">Bill Drill</button>
+        <button class="small" data-pdrill="moz" aria-pressed="false">Mozambique</button>
+        <button class="small" data-pdrill="prez" aria-pressed="false">El Presidente</button>
+        <button class="small" data-pdrill="fast" aria-pressed="false">FAST</button>
+      </div>
+      <div class="prog-stats" id="progStats"></div>
+      <div class="prog-chart" id="progChart"></div>
+      <p class="hint" id="progNote">Every full drill string you shoot here is added to your progress, from your first string on. Times only, draw and fire.</p>
     </div>
     <div class="viewport" id="viewport">
       <video id="cam" playsinline muted></video>
@@ -946,7 +985,7 @@ $("#btnMenu").onclick = () => {
   h2hArmed = false; updateMatchStrip();
   showView("menu");
 };
-$("#goLive").onclick = () => { h2hArmed = false; updateMatchStrip(); showView("live"); };
+$("#goLive").onclick = () => { h2hArmed = false; updateMatchStrip(); showView("live"); syncProgPanel(); renderProg(); };
 $("#goLoad").onclick = () => $("#fileIn").click();
 $("#goCompare").onclick = () => requireSafety(
   "Before you enter the review room: unload, show clear, and holster or bench the firearm. Only pick up the phone with empty hands.",
@@ -1191,6 +1230,7 @@ function releaseWake(){ try { wake && wake.release(); } catch(e){} wake = null; 
 
 async function startRun(){
   try { await ensureCamera(); } catch(e){ camError(e); return; }
+  const pp = $("#progPanel"); if (pp) pp.hidden = true;
   if (!window.MediaRecorder){ showMsg($("#liveMsg"), "This browser can't record video. Use Chrome on your phone.", true); return; }
   const c = audioCtx(); await c.resume();
   const mime = pickMime(); chunks = [];
@@ -1276,8 +1316,13 @@ function stopRun(){
   try { rec.stop(); } catch(e){ resetLive(); }
 }
 let lastParRec = 0, lastTurn = null, lastDrill = "", lastName = "", lastJunior = false;
+function syncProgPanel(){
+  const pp = $("#progPanel"); if (!pp) return;
+  pp.hidden = state.mode !== "idle" || !!(h2hArmed && match && match.status === "live");
+}
 function resetLive(){
   state.mode = "idle";
+  setTimeout(syncProgPanel, 0);
   $("#btnStart").textContent = "Start"; $("#btnStart").disabled = false; $("#btnStart").classList.remove("stop");
   $("#fileLbl").hidden = false; $("#recDot").hidden = true;
   updateMatchStrip();
@@ -1501,11 +1546,12 @@ async function persistRun(first){
       drillId: r.drillId || "", beepAuto: !!r.beep.auto, junior: !!r.junior });
     const rank = boardUpdate(r);
     fbOwn(r);
+    histAdd(r);
     if (first){
       toast(rank ? "Saved · #" + rank + " on " + drillName(r.drillId) + " Fastest times" : "String saved to the Range Day Review Room");
       const all = (await DB.all()).filter(x => !x.friend);
       if (all.length > MAX_RUNS){
-        const keep = boardProtected();
+        const keep = boardProtected(); pbProtected().forEach(id => keep.add(id));
         all.sort((a, b) => b.id - a.id);
         for (const old of all.slice(MAX_RUNS)) if (!keep.has(old.id)) await DB.del(old.id);
       }
@@ -2400,7 +2446,7 @@ function armTwoTap(btn, label, fn){
 }
 $("#h2hBoard").addEventListener("click", e => {
   const b = e.target.closest("button"); if (!b) return;
-  if (b.id === "h2hGo"){ h2hArmed = true; updateMatchStrip(); setFace("Ready", "0.00", "Split", "–", "Shots 0"); showView("live"); }
+  if (b.id === "h2hGo"){ h2hArmed = true; updateMatchStrip(); setFace("Ready", "0.00", "Split", "–", "Shots 0"); showView("live"); syncProgPanel(); }
   else if (b.id === "h2hUndo") armTwoTap(b, "Tap again to undo", () => {
     const last = match.results.slice().sort((x, y) => y.at - x.at)[0];
     match.results = match.results.filter(r => r !== last); saveMatch(); renderH2H(); toast("Last string removed");
@@ -2679,6 +2725,132 @@ async function saveBlob(blob, name){
   toast("Saved to Downloads as " + name);
 }
 $("#btnSave").onclick = exportVideo;
+/* ---------- Solo Training: personal bests + progress ----------
+   A permanent, times-only history of every full drill string shot in Solo Training
+   (videos come and go; the history stays). Backfilled once from strings already saved. */
+let hist = store.get("hist", null);
+const saveHist = () => store.set("hist", hist);
+let progDrill = DRILLS[store.get("progDrill", "bill")] ? store.get("progDrill", "bill") : "bill";
+const histTime = r => +(r.shots[r.shots.length - 1] - r.beep.t).toFixed(3);
+function histQualifies(r){
+  const d = DRILLS[r.drillId];
+  return !!(d && r.live && !r.match && !r.junior && r.beep && r.beep.auto && r.shots.length === d.shots);
+}
+function histAdd(r){
+  if (!hist) hist = [];
+  hist = hist.filter(h => h.id !== r.id);
+  if (histQualifies(r)) hist.push({ id: r.id, drillId: r.drillId, t: histTime(r) });
+  hist.sort((a, b) => a.id - b.id);
+  if (hist.length > 3000) hist = hist.slice(-3000);
+  saveHist(); renderProg();
+}
+async function histBackfill(){
+  if (hist) return;
+  hist = [];
+  try {
+    const all = await DB.all();
+    all.filter(x => !x.friend && !x.junior && x.beepAuto !== false && DRILLS[x.drillId] && x.shots && x.shots.length === DRILLS[x.drillId].shots)
+      .forEach(x => hist.push({ id: x.id, drillId: x.drillId, t: +(x.shots[x.shots.length - 1] - x.beep).toFixed(3) }));
+  } catch(e){}
+  hist.sort((a, b) => a.id - b.id); saveHist();
+}
+const pbOf = d => (hist || []).filter(h => h.drillId === d).reduce((m, h) => !m || h.t < m.t ? h : m, null);
+function pbProtected(){ const s = new Set(); Object.keys(DRILLS).forEach(d => { const p = pbOf(d); if (p) s.add(p.id); }); return s; }
+function renderPB(){
+  const g = $("#pbGrid"); if (!g) return; g.textContent = "";
+  Object.keys(DRILLS).forEach(d => {
+    const p = pbOf(d), box = document.createElement("div"); box.className = "pb" + (p ? "" : " none");
+    const l = document.createElement("span"); l.className = "lbl"; l.textContent = DRILLS[d].name;
+    const v = document.createElement("b"); v.textContent = p ? fmt(p.t) : "–";
+    const w = document.createElement("span"); w.className = "when"; w.textContent = p ? whenTxt(p.id) : "Not shot yet";
+    box.append(l, v, w);
+    if (p){ const b = document.createElement("button"); b.className = "small"; b.textContent = "Play"; b.setAttribute("aria-label", "Play your best " + DRILLS[d].name + ", " + fmt(p.t) + " seconds"); b.onclick = () => playPB(d, p); box.appendChild(b); }
+    g.appendChild(box);
+  });
+}
+async function playPB(d, p){
+  let rec = null; try { rec = await DB.get(p.id); } catch(e){}
+  if (!rec || !rec.blob){ toast("That video is no longer on this phone. The time is still your best."); return; }
+  const v = $("#pbVid"); if (v._u) URL.revokeObjectURL(v._u);
+  v._u = URL.createObjectURL(rec.blob);
+  v.onloadedmetadata = () => { try { v.currentTime = Math.max(0, rec.beep - 1); } catch(e){} v.play().catch(() => {}); };
+  v.src = v._u; $("#pbNow").textContent = "Best " + DRILLS[d].name + " · " + fmt(p.t) + " s · " + whenTxt(p.id);
+  $("#pbPlayer").hidden = false;
+}
+$("#pbClose").onclick = () => { $("#pbVid").pause(); $("#pbPlayer").hidden = true; };
+function renderProgStats(pts){
+  const S = $("#progStats"); S.textContent = "";
+  if (!pts.length) return;
+  const first = pts[0].t, latest = pts[pts.length - 1].t, best = Math.min(...pts.map(p => p.t));
+  [["First", first, ""], ["Best", best, first - best > 0.004 ? (first - best).toFixed(2) + " s faster than first" : ""], ["Latest", latest, pts.length > 1 ? (latest <= first ? (first - latest).toFixed(2) + " s faster" : (latest - first).toFixed(2) + " s slower") + " than first" : ""]].forEach(([n, t, dlt]) => {
+    const c = document.createElement("div");
+    const l = document.createElement("span"); l.className = "lbl"; l.textContent = n;
+    const b = document.createElement("b"); b.textContent = fmt(t);
+    c.append(l, b);
+    if (dlt){ const dd = document.createElement("span"); dd.className = "delta"; dd.textContent = dlt; c.appendChild(dd); }
+    S.appendChild(c);
+  });
+}
+function renderChart(pts){
+  const box = $("#progChart"); box.textContent = "";
+  if (pts.length < 2){
+    const e = document.createElement("div"); e.className = "prog-empty";
+    e.textContent = pts.length ? "One " + DRILLS[progDrill].name + " string so far. Shoot another to start your progress line." : "No " + DRILLS[progDrill].name + " strings yet. Pick it in String setup and shoot to start your line.";
+    box.appendChild(e); return;
+  }
+  const W = 360, H = 210, L = 34, R = 10, T = 22, B = 26;
+  const ts = pts.map(p => p.t), lo = Math.min(...ts), hi = Math.max(...ts), pad = Math.max(0.1, (hi - lo) * 0.15);
+  const y0 = Math.max(0, lo - pad), y1 = hi + pad;
+  const X = i => L + (pts.length === 1 ? 0 : i / (pts.length - 1) * (W - L - R));
+  const Y = t => T + (1 - (t - y0) / (y1 - y0)) * (H - T - B);
+  const NS = "http://www.w3.org/2000/svg", el = (n, a) => { const e = document.createElementNS(NS, n); for (const k in a) e.setAttribute(k, a[k]); return e; };
+  const svg = el("svg", { viewBox: "0 0 " + W + " " + H, role: "img", "aria-label": DRILLS[progDrill].name + " times over " + pts.length + " strings, first " + fmt(pts[0].t) + ", best " + fmt(lo) + ", latest " + fmt(pts[pts.length - 1].t) + " seconds" });
+  /* recessive grid + y labels */
+  const step = (y1 - y0) > 4 ? 1 : (y1 - y0) > 1.6 ? 0.5 : (y1 - y0) > 0.6 ? 0.2 : 0.1;
+  for (let v = Math.ceil(y0 / step) * step; v <= y1 + 1e-9; v += step){
+    svg.appendChild(el("line", { x1: L, x2: W - R, y1: Y(v), y2: Y(v), stroke: "#2e3237", "stroke-width": 1 }));
+    const tx = el("text", { x: L - 8, y: Y(v) + 4, "text-anchor": "end", fill: "#8b919a", "font-size": 11, "font-family": "Share Tech Mono, monospace" }); tx.textContent = v.toFixed(step < 0.5 ? 1 : 1); svg.appendChild(tx);
+  }
+  const xl = el("text", { x: L, y: H - 8, fill: "#8b919a", "font-size": 11, "font-family": "Barlow Condensed, Arial Narrow, sans-serif" }); xl.textContent = "FIRST · " + new Date(pts[0].id).toLocaleDateString(undefined, { month: "short", day: "numeric" }).toUpperCase(); svg.appendChild(xl);
+  const xr = el("text", { x: W - R, y: H - 8, "text-anchor": "end", fill: "#8b919a", "font-size": 11, "font-family": "Barlow Condensed, Arial Narrow, sans-serif" }); xr.textContent = "LATEST · " + new Date(pts[pts.length - 1].id).toLocaleDateString(undefined, { month: "short", day: "numeric" }).toUpperCase(); svg.appendChild(xr);
+  /* best-so-far step line (dashed) and the actual times */
+  let run_ = Infinity; const bestPath = pts.map((p, i) => { run_ = Math.min(run_, p.t); return (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(run_).toFixed(1); }).join(" ");
+  svg.appendChild(el("path", { d: bestPath, fill: "none", stroke: "#6f757d", "stroke-width": 1.5, "stroke-dasharray": "4 4" }));
+  svg.appendChild(el("path", { d: pts.map((p, i) => (i ? "L" : "M") + X(i).toFixed(1) + " " + Y(p.t).toFixed(1)).join(" "), fill: "none", stroke: "#d6d9dd", "stroke-width": 2, "stroke-linejoin": "round", "stroke-linecap": "round" }));
+  const bi = ts.indexOf(lo);
+  pts.forEach((p, i) => {
+    const key = i === 0 || i === pts.length - 1 || i === bi;
+    if (key || pts.length <= 30) svg.appendChild(el("circle", { cx: X(i), cy: Y(p.t), r: key ? 5 : 3.2, fill: i === bi ? "#ffffff" : "#d6d9dd", stroke: "#121417", "stroke-width": 2 }));
+  });
+  const bx = X(bi), anc = bx > W * 0.7 ? "end" : bx < W * 0.3 ? "start" : "middle";
+  const bl = el("text", { x: anc === "end" ? bx - 8 : anc === "start" ? bx + 8 : bx, y: Y(lo) - 10, "text-anchor": anc, fill: "#f5f6f8", "font-size": 12, "font-family": "Share Tech Mono, monospace" }); bl.textContent = "BEST " + fmt(lo); svg.appendChild(bl);
+  /* hover / tap: nearest string */
+  const guide = el("line", { y1: T, y2: H - B, stroke: "#8b919a", "stroke-width": 1, visibility: "hidden" }); svg.appendChild(guide);
+  const dot = el("circle", { r: 6, fill: "#ffffff", stroke: "#121417", "stroke-width": 2, visibility: "hidden" }); svg.appendChild(dot);
+  const hit = el("rect", { x: L, y: T, width: W - L - R, height: H - T - B, fill: "transparent" }); svg.appendChild(hit);
+  box.appendChild(svg);
+  const tip = document.createElement("div"); tip.className = "prog-tip"; tip.hidden = true; box.appendChild(tip);
+  const show = e => {
+    const rc = svg.getBoundingClientRect(), sx = (e.clientX - rc.left) / rc.width * W;
+    const i = Math.max(0, Math.min(pts.length - 1, Math.round((sx - L) / (W - L - R) * (pts.length - 1))));
+    const p = pts[i];
+    guide.setAttribute("x1", X(i)); guide.setAttribute("x2", X(i)); guide.setAttribute("visibility", "visible");
+    dot.setAttribute("cx", X(i)); dot.setAttribute("cy", Y(p.t)); dot.setAttribute("visibility", "visible");
+    tip.innerHTML = "<b>" + fmt(p.t) + " s</b> · string " + (i + 1) + " · " + jh(whenTxt(p.id));
+    tip.style.left = (X(i) / W * rc.width) + "px"; tip.style.top = (Y(p.t) / H * rc.height) + "px"; tip.hidden = false;
+  };
+  const hide = () => { guide.setAttribute("visibility", "hidden"); dot.setAttribute("visibility", "hidden"); tip.hidden = true; };
+  hit.addEventListener("pointermove", show); hit.addEventListener("pointerdown", show); hit.addEventListener("pointerleave", hide);
+}
+function renderProg(){
+  if (!$("#progPanel")) return;
+  renderPB();
+  document.querySelectorAll("[data-pdrill]").forEach(b => b.setAttribute("aria-pressed", String(b.dataset.pdrill === progDrill)));
+  const pts = (hist || []).filter(h => h.drillId === progDrill);
+  renderProgStats(pts); renderChart(pts);
+}
+document.querySelectorAll("[data-pdrill]").forEach(b => b.onclick = () => { progDrill = b.dataset.pdrill; store.set("progDrill", progDrill); renderProg(); });
+histBackfill().then(renderProg);
 /* ---------- New to shooting ----------
    Not a test and not a gate: a quick self-check that points new shooters to a
    range and a certified instructor before they use the timer. Saved on this phone. */
