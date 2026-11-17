@@ -141,7 +141,17 @@ input[type=range]{width:100%;accent-color:#c4c9cf}
 .hdr-btns{display:flex;gap:8px;flex:none}
 .brand{white-space:nowrap;min-width:0}
 .brand small{white-space:normal;margin-top:3px;line-height:1.35}
+@media (max-width:420px){
+  header{gap:8px}
+  .brand{font-size:1.02rem;letter-spacing:.08em}
+  .hdr-btns{gap:6px}
+  header .small{padding-inline:9px;letter-spacing:.08em;font-size:.82rem}
+}
+@media (max-width:370px){
+  .brand{font-size:.94rem;letter-spacing:.05em}
+}
 @media (max-width:440px){.brand{font-size:1rem;letter-spacing:.07em}.brand small{font-size:.52rem;letter-spacing:.08em}.hdr-btns .small{padding:7px 10px;letter-spacing:.08em}}
+@media (max-width:370px){.brand{font-size:.92rem;letter-spacing:.05em}.hdr-btns{gap:6px}.hdr-btns .small{padding:7px 8px;font-size:.8rem}}
 .safety-extra{border-top:1px solid var(--line);padding-top:10px;color:var(--white)!important;font-weight:600}
 
 .menu{display:grid;gap:12px}
@@ -620,7 +630,7 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
           </div>
         </div>
         <div class="field">
-          <span class="lbl" id="liveRoundsLbl">Rounds in a row</span>
+          <span class="lbl" id="liveRoundsLbl">Rounds</span>
           <div class="stepper" role="group" aria-labelledby="liveRoundsLbl">
             <button class="small" data-adj="rounds" data-d="-1" aria-label="Fewer rounds">−</button>
             <output class="step-val" data-show="rounds">1</output>
@@ -887,7 +897,7 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
   </section>
 
 
-  <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Splits are to 1/100 s.</p>
+  <p class="foot">Shots are found by sound: a sharp, loud spike after the start beep counts as a shot. Times are to the hundredth of a second.</p>
   </main>
 </div>
 
@@ -1318,7 +1328,8 @@ function stopRun(){
 let lastParRec = 0, lastTurn = null, lastDrill = "", lastName = "", lastJunior = false;
 function syncProgPanel(){
   const pp = $("#progPanel"); if (!pp) return;
-  pp.hidden = state.mode !== "idle" || !!(h2hArmed && match && match.status === "live");
+  let has = false; try { has = !!(hist && hist.length); } catch(e){}
+  pp.hidden = state.mode !== "idle" || !!(h2hArmed && match && match.status === "live") || !has;
 }
 function resetLive(){
   state.mode = "idle";
@@ -2202,7 +2213,7 @@ function setModeUI(){
   $("#ghostField").hidden = cmp.mode !== "ghost" || !!cmp.single;
   $("#cmpView").textContent = cmp.mode === "ghost" ? "View: Ghost" : "View: Side by side";
   /* one string: no view switch, no per-side controls, simple sound */
-  $("#cmpView").hidden = !!cmp.single;
+  $("#cmpView").hidden = !!cmp.single || !cmp.a;
   const sc = document.querySelector(".side-ctrl"); if (sc) sc.hidden = !!cmp.single;
   document.querySelectorAll('[data-sound="a"],[data-sound="b"]').forEach(b => b.hidden = !!cmp.single);
   $("#cmpToShot").textContent = cmp.single ? "Jump to first shot" : "Jump to faster shot";
@@ -2742,7 +2753,7 @@ function histAdd(r){
   if (histQualifies(r)) hist.push({ id: r.id, drillId: r.drillId, t: histTime(r) });
   hist.sort((a, b) => a.id - b.id);
   if (hist.length > 3000) hist = hist.slice(-3000);
-  saveHist(); renderProg();
+  saveHist(); renderProg(); syncProgPanel();
 }
 async function histBackfill(){
   if (hist) return;
@@ -2850,7 +2861,7 @@ function renderProg(){
   renderProgStats(pts); renderChart(pts);
 }
 document.querySelectorAll("[data-pdrill]").forEach(b => b.onclick = () => { progDrill = b.dataset.pdrill; store.set("progDrill", progDrill); renderProg(); });
-histBackfill().then(renderProg);
+histBackfill().then(() => { renderProg(); syncProgPanel(); });
 /* ---------- New to shooting ----------
    Not a test and not a gate: a quick self-check that points new shooters to a
    range and a certified instructor before they use the timer. Saved on this phone. */
