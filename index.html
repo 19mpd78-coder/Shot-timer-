@@ -82,7 +82,11 @@ label.file input{position:absolute;inset:0;opacity:0;cursor:pointer}
 .face .digits.sm{font-size:clamp(1.8rem,9vw,2.6rem)}
 .face.flash{border-color:var(--silver)}
 
-.controls{display:grid;grid-template-columns:1.4fr 1fr;gap:10px}
+.controls{display:grid;grid-template-columns:1fr;gap:10px}
+.viewport .cam-go{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);z-index:3;width:min(64%,280px);min-height:46px;padding:8px 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,.7),0 4px 14px rgba(0,0,0,.65)}
+.viewport .cam-go.stop{background:rgba(26,14,15,.9)}
+.viewport .placeholder{padding-bottom:66px}
 .msg{margin:0;padding:10px 12px;border-radius:10px;background:var(--panel);border:1px solid var(--line);color:var(--silver);font-size:.92rem}
 .msg.warn{border-color:#5a3436;background:#1a1213}
 
@@ -560,6 +564,21 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <div class="hint" id="msTeam"></div>
       <p class="ms-safe" id="msSafe">The phone runner starts each string. Shooter, hands off the phone.</p>
     </div>
+    <div class="viewport" id="viewport">
+      <video id="cam" playsinline muted></video>
+      <div class="placeholder" id="camPh">
+        <p>Set the phone where it sees you and the targets.</p>
+        <button id="btnCam" class="ghost">Turn on camera</button>
+      </div>
+      <div class="rec" id="recDot" hidden>REC</div>
+      <button id="btnStart" class="go cam-go">Start</button>
+    </div>
+
+    <div class="face" id="face">
+      <div class="face-main"><span class="lbl" id="faceLbl">Ready</span><span class="digits" id="faceTime">0.00</span></div>
+      <div class="face-side"><span class="lbl" id="faceSplitLbl">Split</span><span class="digits sm" id="faceSplit">–</span><span class="lbl" id="faceShots">Shots 0</span></div>
+    </div>
+    <p class="msg" id="liveMsg" hidden></p>
     <div class="panel prog" id="progPanel">
       <div class="tools"><h2 class="grow">Your bests</h2><span class="hint">Solo Training, live strings</span></div>
       <div class="pb-grid" id="pbGrid"></div>
@@ -578,20 +597,6 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
       <div class="prog-chart" id="progChart"></div>
       <p class="hint" id="progNote">Every full drill string you shoot here is added to your progress, from your first string on. Times only, draw and fire.</p>
     </div>
-    <div class="viewport" id="viewport">
-      <video id="cam" playsinline muted></video>
-      <div class="placeholder" id="camPh">
-        <p>Set the phone where it sees you and the targets.</p>
-        <button id="btnCam" class="ghost">Turn on camera</button>
-      </div>
-      <div class="rec" id="recDot" hidden>REC</div>
-    </div>
-
-    <div class="face" id="face">
-      <div class="face-main"><span class="lbl" id="faceLbl">Ready</span><span class="digits" id="faceTime">0.00</span></div>
-      <div class="face-side"><span class="lbl" id="faceSplitLbl">Split</span><span class="digits sm" id="faceSplit">–</span><span class="lbl" id="faceShots">Shots 0</span></div>
-    </div>
-    <p class="msg" id="liveMsg" hidden></p>
 
     <div class="field" id="nameField">
       <label class="lbl" for="shooterName">Shooter name · for Fastest times</label>
@@ -637,6 +642,14 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
             <button class="small" data-adj="rounds" data-d="1" aria-label="More rounds">+</button>
           </div>
         </div>
+        <div class="field">
+          <span class="lbl" id="liveWalkLbl">Walk-up time</span>
+          <div class="stepper" role="group" aria-labelledby="liveWalkLbl">
+            <button class="small" data-adj="walk" data-d="-1" aria-label="Shorter walk-up time">−</button>
+            <output class="step-val" data-show="walk">15 s</output>
+            <button class="small" data-adj="walk" data-d="1" aria-label="Longer walk-up time">+</button>
+          </div>
+        </div>
         <div class="field" id="resetField">
           <span class="lbl" id="liveResetLbl">Reset time</span>
           <div class="stepper" role="group" aria-labelledby="liveResetLbl">
@@ -653,10 +666,9 @@ html.on-menu body,html:has(#menu:not([hidden])) body{background:transparent!impo
     <div class="panel set-sum" id="setSum" hidden></div>
 
     <div class="controls">
-      <button id="btnStart" class="go">Start</button>
       <label class="ghost file" id="fileLbl">Upload video<input type="file" id="fileIn" accept="video/*"></label>
     </div>
-    <p class="hint">Start turns on recording, waits a random delay, then beeps. Shoot on the beep. Times on screen are a live preview; the saved video uses the exact times from the recording.</p>
+    <p class="hint" id="startHint">Start turns on recording after a 15 s walk-up to get set, then three short ready beeps, a random delay and the start beep. Shoot on the beep. Times on screen are a live preview; the saved video uses the exact times from the recording.</p>
   </section>
 
   <section id="review" hidden style="display:flex;flex-direction:column;gap:14px">
@@ -911,7 +923,7 @@ const store = {
   set(k, v){ try { localStorage.setItem("stc." + k, JSON.stringify(v)); } catch(e){} }
 };
 const BEEP_HZ = 2700, BEEP_DUR = 0.35, LOCK_MS = 70;
-const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0, drill: "custom", rounds: 1, resetSec: 15 }, store.get("settings", {}));
+const settings = Object.assign({ delayMin: 1.5, delayMax: 4, thrDb: -12, autoStop: true, autoStopSec: 4, shots: 0, par: 0, drill: "custom", rounds: 1, resetSec: 15, walkSec: 15 }, store.get("settings", {}));
 const saveSettings = () => store.set("settings", settings);
 const thrLin = () => Math.pow(10, settings.thrDb / 20);
 
@@ -975,6 +987,7 @@ function showView(name){
   if (name !== "compare" && typeof cmpPause === "function") cmpPause();
   if (name !== "review" && typeof pv !== "undefined" && pv) pv.pause();
   if (name !== "live" && typeof set !== "undefined" && set && !set.done && state.mode === "reset") endSet(true);
+  if (name !== "live" && typeof walk !== "undefined" && walk) cancelWalkup();
   ["menu", "live", "review", "compare", "h2h", "kids", "friends", "newbie"].forEach(v => { $("#" + v).hidden = v !== name; });
   document.documentElement.classList.toggle("on-menu", name === "menu");
   $("#btnMenu").hidden = name === "menu";
@@ -1080,15 +1093,21 @@ function syncSetupUI(){
   const R = settings.rounds || 1, RS = settings.resetSec || 15;
   document.querySelectorAll('[data-show="rounds"]').forEach(el => { el.textContent = String(R); });
   document.querySelectorAll('[data-show="reset"]').forEach(el => { el.textContent = RS + " s"; });
+  const WS = walkSecs();
+  document.querySelectorAll('[data-show="walk"]').forEach(el => { el.textContent = WS ? WS + " s" : "Off"; });
+  const sh = $("#startHint"); if (sh) sh.textContent = (WS ? "Start turns on recording after a " + WS + " s walk-up to get set, then three short ready beeps, a random delay and the start beep. " : "Start turns on recording, waits a random delay, then beeps. ") + "Shoot on the beep. Times on screen are a live preview; the saved video uses the exact times from the recording.";
   const rf = $("#resetField"); if (rf) rf.hidden = R < 2;
   const rh = $("#roundsHint"); if (rh){ rh.hidden = R < 2;
-    rh.textContent = "Runs " + R + " rounds in a row with one tap of Start. After each round you get " + RS + " s to reset safely: finger off the trigger, reholster carefully or come back to the ready position. Three short ready beeps, then the random delay and the start beep. Every round is saved, and you see all " + R + " at the end."; }
+    rh.textContent = "Runs " + R + " rounds in a row with one tap of Start" + (walkSecs() ? ", starting with the " + walkSecs() + " s walk-up" : "") + ". After each round you get " + RS + " s to reset safely: finger off the trigger, reholster carefully or come back to the ready position. Three short ready beeps, then the random delay and the start beep. Every round is saved, and you see all " + R + " at the end."; }
 }
 const RESET_STEPS = [10, 15, 20, 30, 45, 60];
+const WALK_STEPS = [0, 5, 10, 15, 20, 30, 45, 60];
+function walkSecs(){ const w = settings.walkSec; return WALK_STEPS.includes(w) ? w : 15; }
 document.querySelectorAll("[data-adj]").forEach(b => b.onclick = () => {
   const d = Number(b.dataset.d);
   if (b.dataset.adj === "shots"){ settings.shots = Math.max(0, Math.min(30, settings.shots + d)); settings.drill = "custom"; }
   else if (b.dataset.adj === "rounds"){ settings.rounds = Math.max(1, Math.min(10, (settings.rounds || 1) + d)); }
+  else if (b.dataset.adj === "walk"){ let i = WALK_STEPS.indexOf(walkSecs()); settings.walkSec = WALK_STEPS[Math.max(0, Math.min(WALK_STEPS.length - 1, i + d))]; }
   else if (b.dataset.adj === "reset"){ let i = RESET_STEPS.indexOf(settings.resetSec || 15); if (i < 0) i = 1; settings.resetSec = RESET_STEPS[Math.max(0, Math.min(RESET_STEPS.length - 1, i + d))]; }
   else {
     let i = PAR_STEPS.indexOf(settings.par); if (i < 0) i = 0;
@@ -1347,14 +1366,55 @@ function onRecStop(){
 }
 $("#btnStart").onclick = () => {
   if (state.mode === "reset"){ endSet(true); return; }
+  if (state.mode === "walkup"){ cancelWalkup(); return; }
   if (state.mode === "idle"){
     const solo = !(h2hArmed && match && match.status === "live");
     $("#setSum").hidden = true;
     set = solo && (settings.rounds || 1) > 1 ? { total: settings.rounds, n: 1, recs: [], done: false, timers: [] } : null;
-    startRun();
+    beginWalkup();
   }
   else if (state.mode === "live"){ if (set && !set.done) set.stopAfter = true; stopRun(); }
 };
+
+/* ---------- walk-up: time to put the phone down and get set ----------
+   Countdown, then three short ready beeps (same as between rounds), then
+   startRun() turns on recording, waits the random delay and beeps. */
+let walk = null;
+async function beginWalkup(){
+  const secs = walkSecs();
+  if (!secs){ startRun(); return; }
+  const c = audioCtx(); try { await c.resume(); } catch(e){}
+  try { await ensureCamera(); } catch(e){ set = null; camError(e); return; }
+  const pp = $("#progPanel"); if (pp) pp.hidden = true;
+  state.mode = "walkup";
+  walk = { timers: [], endAt: performance.now() + secs * 1000 };
+  $("#btnStart").disabled = false; $("#btnStart").textContent = "Cancel"; $("#btnStart").classList.add("stop");
+  $("#fileLbl").hidden = true;
+  requestWake();
+  const w = walk;
+  const step = () => {
+    if (walk !== w || state.mode !== "walkup") return;
+    const left = Math.max(0, (w.endAt - performance.now()) / 1000);
+    setFace("Get set", String(Math.ceil(left)), "Then", "3 beeps", "Seconds to walk up");
+    if (left <= 0){
+      const t0 = c.currentTime + 0.05;
+      for (let i = 0; i < 3; i++) playBeep(t0 + i, READY_HZ, 0.12);
+      setFace("Ready", "…", "Then", "Beep", "Ready beeps");
+      w.timers.push(setTimeout(() => { if (walk === w && state.mode === "walkup"){ walk = null; state.mode = "idle"; startRun(); } }, 3000));
+      return;
+    }
+    w.timers.push(setTimeout(step, 200));
+  };
+  step();
+}
+function cancelWalkup(){
+  if (!walk) return;
+  walk.timers.forEach(clearTimeout); walk = null;
+  set = null;
+  releaseWake();
+  resetLive();
+  setFace("Ready", "0.00", "Split", "–", "Shots 0");
+}
 
 /* ---------- rounds in a row (Solo Training) ----------
    One tap runs N rounds: each round is saved quietly, then a safe reset countdown,
@@ -1379,7 +1439,7 @@ function startReset(){
   const step = () => {
     if (!set || set.done || state.mode !== "reset") return;
     const left = Math.max(0, (endAt - performance.now()) / 1000);
-    setFace("Reset", Math.ceil(left) + " s", "Next", "Round " + set.n, "Finger off the trigger");
+    setFace("Reset", String(Math.ceil(left)), "Next", "Round " + set.n, "Finger off the trigger");
     if (left <= 0){
       /* three ready beeps, one second apart, then the next round */
       const t0 = c.currentTime + 0.05;
